@@ -12,3 +12,36 @@ Three types of models are calibrated in this example:
 - decision trees
 
 - random forests
+
+
+Attached alongside is a data file named: `cars2020.csv`.
+
+The columns in the data contain the following variables respectively:
+
+- make: brand of the vehicle
+
+- model: name of a specific car product
+
+- mpg, miles per gallon: a representative number for the number of miles the car can be driven while using 1 gallon of fuel
+
+- transmission: Automatic, CVT, or Manual
+
+- gears: number of gears
+
+- drive, drivetrain: 4WD, AWD, FWD, PT 4WD, RWD
+
+- disp: engine displacement (in liters)
+
+- cyl: number of cylinders
+
+- class, vehicle category: Compact, Large, Mid St Wagon, Midsize, Minicompact, Minivan, Sm Pickup Truck, Sm St Wagon, Sm SUV, SPV, Std Pickup Truck, Std SUV, Subcompact, or Two Seater
+
+- sidi, Spark Ignited Direct Ignition: Y or N
+
+- aspiration: Natural, Super Super+Turbo, Turbo
+
+- fuel, primary fuel type: Diesel, Mid, Premium, Regular
+
+- atvType, alternative technology: Diesel, FFV, Hybrid, None, or Plug-in Hybrid
+
+- startStop, start-stop technology: Y or N

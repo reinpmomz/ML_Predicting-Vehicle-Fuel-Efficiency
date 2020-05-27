@@ -1,0 +1,175 @@
+---
+title: "ML_Predicting-Vehicle-Fuel-Efficiency"
+author: "Reinp"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    keep_md: yes
+  pdf_document: default
+  word_document: default
+---
+
+# R Programming
+
+## Set Chunk requirements
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+#echo=FALSE indicates that the code will not be shown in the final document 
+#(though any results/output would still be displayed).
+#include=FALSE to have the chunk evaluated, but neither the code nor its output displayed
+# warning=FALSE and message=FALSE suppress any R warnings or messages from being included 
+#in the final document
+```
+
+
+## Load Relevant Packages and Data Set
+
+```{r}
+library(tidyverse)
+## tidyverse includes readr, ggplot2, dplyr, forcats, tibble, tidyr, purrr, stringr
+
+## Reading our dataset
+setwd('E:/Documents/Reinp/GitHub Respositories/ML_Predicting-Vehicle-Fuel-Efficiency')
+
+
+cars2020 <- read.csv("cars2020.csv")
+attach(cars2020)
+View(cars2020)
+
+```
+
+## Structure of the Data
+
+```{r structure of data}
+
+cars2020 #The input data consists of 1,164 observations of 14 variables
+
+head(cars2020)
+
+tail(cars2020)
+
+# How many variables and observations are there?
+ncol(cars2020)
+
+nrow(cars2020)
+
+#learn more about the dataset
+help(cars2020)
+??cars2020
+str(cars2020)
+class(cars2020)
+typeof(cars2020) 
+length(cars2020)
+names(cars2020) #display variable names
+#attributes(cars2020) #names(cars2020), class(cars2020), row.names(cars2020)
+```
+
+## Missing data
+
+```{R}
+
+which(!complete.cases(cars2020))
+
+
+```
+
+## Descriptive Statistics
+
+```{R}
+library(knitr)
+library(mosaic)
+library(psych)
+
+
+names(cars2020)[1] <- "car_make" #rename by index column name with base r functions
+#names(cars2020)[names(cars2020) == "ï..make"] <- "car_make"
+
+#summary statistics
+summary(cars2020) ##summarizes the dataset
+
+describe(cars2020)
+
+#1. Dolar sign Syntax
+
+table(cars2020$car_make) 
+table(cars2020$transmission)
+table(cars2020$drive)
+table(cars2020$class)
+table(cars2020$sidi)
+table(cars2020$aspiration)
+table(cars2020$fuelType1)
+table(cars2020$atvType)
+table(cars2020$startStop)
+
+
+summary(cars2020$mpg)
+summary(cars2020$gears)
+summary(cars2020$displ)
+summary(cars2020$cylinders)
+
+
+
+#2. FormulaSyntax
+
+## one categorical
+
+tally(~car_make, data=cars2020)
+tally(~transmission, data=cars2020)
+tally(~drive, data=cars2020)
+tally(~class, data=cars2020)
+tally(~sidi, data=cars2020)
+tally(~aspiration, data=cars2020)
+tally(~fuelType1, data=cars2020)
+tally(~atvType, data=cars2020)
+tally(~startStop, data=cars2020)
+
+## Two categoraical
+
+tally(car_make~transmission, data=cars2020)
+tally(car_make~drive, data=cars2020)
+tally(car_make~class, data=cars2020)
+tally(car_make~sidi, data=cars2020)
+tally(car_make~aspiration, data=cars2020)
+tally(car_make~fuelType1, data=cars2020)
+tally(car_make~startStop, data=cars2020)
+
+library(kableExtra)
+kable(cbind(tally(car_make~transmission, data=cars2020), tally(car_make~sidi,
+ data=cars2020), tally(car_make~startStop, data=cars2020)), align = "cccrrrr", 
+  caption = "Group Rows")%>%
+  add_header_above(c(" ", "Transmission" = 3, "Spark Ignited Direct Ignition" = 2,
+                     "start-stop technology" = 2))
+
+#latex, html, markdown, pandoc, and rst
+
+
+##one continous variable
+
+favstats(~mpg, data=cars2020)[c("max", "mean","sd", "n")]
+favstats(~mpg, data=cars2020)
+
+favstats(~gears, data=cars2020)
+favstats(~displ, data=cars2020)
+favstats(~cylinders, data=cars2020)
+
+##one continous one categorical
+
+favstats(mpg~ car_make, data=cars2020)
+favstats(mpg~ transmission, data=cars2020)
+favstats(mpg~ drive, data=cars2020)
+favstats(mpg~ class, data=cars2020)
+favstats(mpg~ aspiration, data=cars2020)
+favstats(mpg~ fuelType1, data=cars2020)
+favstats(mpg~ atvType, data=cars2020)
+
+##one continous two categorical
+favstats(mpg~ car_make+transmission, data=cars2020)
+favstats(mpg~ car_make+aspiration, data=cars2020)
+favstats(mpg~ car_make+fuelType1, data=cars2020)
+
+
+
+```
+
+
