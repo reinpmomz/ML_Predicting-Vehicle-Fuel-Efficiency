@@ -165,8 +165,8 @@ favstats(mpg~ atvType, data=cars2020)
 
 ##one continous two categorical
 favstats(mpg~ car_make+transmission, data=cars2020)
-favstats(mpg~ car_make+aspiration, data=cars2020)
-favstats(mpg~ car_make+fuelType1, data=cars2020)
+#favstats(mpg~ car_make+aspiration, data=cars2020)
+#favstats(mpg~ car_make+fuelType1, data=cars2020)
 
 
 
