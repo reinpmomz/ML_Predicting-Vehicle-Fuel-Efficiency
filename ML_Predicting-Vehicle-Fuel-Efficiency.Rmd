@@ -43,7 +43,7 @@ View(cars2020)
 
 ```{r structure of data}
 
-cars2020 #The input data consists of 1,164 observations of 14 variables
+#cars2020 #The input data consists of 1,164 observations of 14 variables
 
 head(cars2020)
 

@@ -38,7 +38,7 @@ The columns in the data contain the following variables respectively:
 
 - sidi, Spark Ignited Direct Ignition: Y or N
 
-- aspiration: Natural, Super Super+Turbo, Turbo
+- aspiration: Natural, Super, Super+Turbo, Turbo
 
 - fuel, primary fuel type: Diesel, Mid, Premium, Regular
 
