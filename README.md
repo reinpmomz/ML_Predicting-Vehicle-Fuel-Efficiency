@@ -7,8 +7,8 @@ This particular example was most-immediately inspired by a case study in the exc
 
 Three types of models are calibrated in this example:
 
--linear regression using Ordinary Least Squares (OLS)
+- linear regression using Ordinary Least Squares (OLS)
 
--decision trees
+- decision trees
 
--random forests
+- random forests
