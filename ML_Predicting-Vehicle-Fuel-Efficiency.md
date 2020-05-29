@@ -1,7 +1,7 @@
 ---
 title: "ML_Predicting-Vehicle-Fuel-Efficiency"
 author: "Reinp"
-date: "2020-05-28"
+date: "2020-05-29"
 output:
   html_document: 
     keep_md: yes
@@ -128,22 +128,22 @@ str(cars2020)
 
 ```
 ## 'data.frame':	1164 obs. of  16 variables:
-##  $ ï..make     : Factor w/ 43 levels "Acura","Alfa Romeo",..: 41 41 41 41 41 41 41 24 24 24 ...
-##  $ model       : Factor w/ 834 levels "124 Spider","1500 2WD",..: 227 230 227 232 227 227 231 703 704 703 ...
+##  $ ï..make     : chr  "Toyota" "Toyota" "Toyota" "Toyota" ...
+##  $ model       : chr  "Corolla" "Corolla Hybrid" "Corolla" "Corolla XSE" ...
 ##  $ mpg         : num  34.3 52 31.8 33.7 33 ...
-##  $ transmission: Factor w/ 3 levels "Automatic","CVT",..: 2 2 3 2 2 3 2 2 2 3 ...
+##  $ transmission: chr  "CVT" "CVT" "Manual" "CVT" ...
 ##  $ gears       : int  10 1 6 10 1 6 1 1 1 6 ...
-##  $ drive       : Factor w/ 5 levels "4WD","AWD","FWD",..: 3 3 3 3 3 3 3 3 3 3 ...
+##  $ drive       : chr  "FWD" "FWD" "FWD" "FWD" ...
 ##  $ displ       : num  2 1.8 2 2 1.8 1.8 1.8 2 2 2 ...
 ##  $ cylinders   : int  4 4 4 4 4 4 4 4 4 4 ...
-##  $ class       : Factor w/ 15 levels "Compact","Large",..: 1 1 1 1 1 1 1 9 9 9 ...
+##  $ class       : chr  "Compact" "Compact" "Compact" "Compact" ...
 ##  $ lv2         : int  0 0 0 0 0 0 0 0 0 0 ...
 ##  $ lv4         : int  13 13 13 13 13 13 13 24 24 24 ...
-##  $ sidi        : Factor w/ 2 levels "N","Y": 2 1 2 2 1 1 1 1 1 1 ...
-##  $ aspiration  : Factor w/ 4 levels "Natural","Super",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ fuelType1   : Factor w/ 4 levels "Diesel","Midgrade Gasoline",..: 4 4 4 4 4 4 4 4 4 4 ...
-##  $ atvType     : Factor w/ 5 levels "Diesel","FFV",..: 4 3 4 4 4 4 4 4 4 4 ...
-##  $ startStop   : Factor w/ 2 levels "N","Y": 1 2 1 1 1 1 1 1 1 1 ...
+##  $ sidi        : chr  "Y" "N" "Y" "Y" ...
+##  $ aspiration  : chr  "Natural" "Natural" "Natural" "Natural" ...
+##  $ fuelType1   : chr  "Regular Gasoline" "Regular Gasoline" "Regular Gasoline" "Regular Gasoline" ...
+##  $ atvType     : chr  "None" "Hybrid" "None" "None" ...
+##  $ startStop   : chr  "N" "Y" "N" "N" ...
 ```
 
 ```r
@@ -213,37 +213,33 @@ summary(cars2020) ##summarizes the dataset
 ```
 
 ```
-##           car_make             model           mpg           transmission
-##  BMW          :111   Sierra 4WD   :   9   Min.   :10.59   Automatic:812  
-##  Mercedes-Benz: 89   Silverado 4WD:   9   1st Qu.:19.32   CVT      :128  
-##  Chevrolet    : 79   Camaro       :   8   Median :22.63   Manual   :224  
-##  Ford         : 73   Sierra 2WD   :   8   Mean   :23.55                  
-##  Toyota       : 64   Silverado 2WD:   8   3rd Qu.:26.36                  
-##  GMC          : 53   Civic 2Dr    :   6   Max.   :57.78                  
-##  (Other)      :695   (Other)      :1116                                  
-##      gears           drive         displ         cylinders            class    
-##  Min.   : 1.000   4WD   :164   Min.   :1.000   Min.   : 3.00   Sm SUV    :237  
-##  1st Qu.: 6.000   AWD   :378   1st Qu.:2.000   1st Qu.: 4.00   Midsize   :171  
-##  Median : 8.000   FWD   :298   Median :3.000   Median : 6.00   Std SUV   :139  
-##  Mean   : 7.303   PT 4WD: 30   Mean   :3.077   Mean   : 5.57   Compact   :129  
-##  3rd Qu.: 8.000   RWD   :294   3rd Qu.:3.600   3rd Qu.: 6.00   Subcompact:118  
-##  Max.   :10.000                Max.   :8.000   Max.   :16.00   Large     :103  
-##                                                                (Other)   :267  
-##       lv2              lv4         sidi          aspiration 
-##  Min.   : 0.000   Min.   : 0.000   N:217   Natural    :494  
-##  1st Qu.: 0.000   1st Qu.: 0.000   Y:947   Super      : 41  
-##  Median : 0.000   Median : 0.000           Super+Turbo:  6  
-##  Mean   : 1.587   Mean   : 5.253           Turbo      :623  
-##  3rd Qu.: 0.000   3rd Qu.:13.000                            
-##  Max.   :22.000   Max.   :47.000                            
-##                                                             
-##              fuelType1             atvType     startStop
-##  Diesel           : 20   Diesel        :  20   N:492    
-##  Midgrade Gasoline: 12   FFV           :  24   Y:672    
-##  Premium Gasoline :593   Hybrid        :  78            
-##  Regular Gasoline :539   None          :1006            
-##                          Plug-in Hybrid:  36            
-##                                                         
+##    car_make            model                mpg        transmission      
+##  Length:1164        Length:1164        Min.   :10.59   Length:1164       
+##  Class :character   Class :character   1st Qu.:19.32   Class :character  
+##  Mode  :character   Mode  :character   Median :22.63   Mode  :character  
+##                                        Mean   :23.55                     
+##                                        3rd Qu.:26.36                     
+##                                        Max.   :57.78                     
+##      gears           drive               displ         cylinders    
+##  Min.   : 1.000   Length:1164        Min.   :1.000   Min.   : 3.00  
+##  1st Qu.: 6.000   Class :character   1st Qu.:2.000   1st Qu.: 4.00  
+##  Median : 8.000   Mode  :character   Median :3.000   Median : 6.00  
+##  Mean   : 7.303                      Mean   :3.077   Mean   : 5.57  
+##  3rd Qu.: 8.000                      3rd Qu.:3.600   3rd Qu.: 6.00  
+##  Max.   :10.000                      Max.   :8.000   Max.   :16.00  
+##     class                lv2              lv4             sidi          
+##  Length:1164        Min.   : 0.000   Min.   : 0.000   Length:1164       
+##  Class :character   1st Qu.: 0.000   1st Qu.: 0.000   Class :character  
+##  Mode  :character   Median : 0.000   Median : 0.000   Mode  :character  
+##                     Mean   : 1.587   Mean   : 5.253                     
+##                     3rd Qu.: 0.000   3rd Qu.:13.000                     
+##                     Max.   :22.000   Max.   :47.000                     
+##   aspiration         fuelType1           atvType           startStop        
+##  Length:1164        Length:1164        Length:1164        Length:1164       
+##  Class :character   Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+##                                                                             
+##                                                                             
 ## 
 ```
 
@@ -253,39 +249,39 @@ describe(cars2020)
 
 ```
 ##               vars    n   mean     sd median trimmed    mad   min    max  range
-## car_make*        1 1164  21.67  12.11  20.00   21.39  16.31  1.00  43.00  42.00
-## model*           2 1164 420.10 243.69 415.50  420.82 324.69  1.00 834.00 833.00
+## car_make*        1 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
+## model*           2 1164 146.44 188.00  86.00  146.44 124.54  2.00 530.00 528.00
 ## mpg              3 1164  23.55   6.40  22.63   22.86   5.21 10.59  57.78  47.19
-## transmission*    4 1164   1.49   0.80   1.00    1.37   0.00  1.00   3.00   2.00
+## transmission*    4 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
 ## gears            5 1164   7.30   1.97   8.00    7.51   1.48  1.00  10.00   9.00
-## drive*           6 1164   2.92   1.39   3.00    2.91   1.48  1.00   5.00   4.00
+## drive*           6 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
 ## displ            7 1164   3.08   1.29   3.00    2.92   1.48  1.00   8.00   7.00
 ## cylinders        8 1164   5.57   1.83   6.00    5.37   2.97  3.00  16.00  13.00
-## class*           9 1164   8.27   4.74  10.00    8.41   5.93  1.00  15.00  14.00
+## class*           9 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
 ## lv2             10 1164   1.59   3.94   0.00    0.48   0.00  0.00  22.00  22.00
 ## lv4             11 1164   5.25   8.25   0.00    3.79   0.00  0.00  47.00  47.00
-## sidi*           12 1164   1.81   0.39   2.00    1.89   0.00  1.00   2.00   1.00
-## aspiration*     13 1164   2.65   1.47   4.00    2.69   0.00  1.00   4.00   3.00
-## fuelType1*      14 1164   3.42   0.61   3.00    3.45   0.00  1.00   4.00   3.00
-## atvType*        15 1164   3.87   0.56   4.00    3.99   0.00  1.00   5.00   4.00
-## startStop*      16 1164   1.58   0.49   2.00    1.60   0.00  1.00   2.00   1.00
+## sidi*           12 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
+## aspiration*     13 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
+## fuelType1*      14 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
+## atvType*        15 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
+## startStop*      16 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
 ##                skew kurtosis   se
-## car_make*      0.13    -1.20 0.35
-## model*         0.01    -1.25 7.14
+## car_make*        NA       NA   NA
+## model*         0.86    -0.83 5.51
 ## mpg            1.64     4.74 0.19
-## transmission*  1.16    -0.43 0.02
+## transmission*    NA       NA   NA
 ## gears         -1.62     3.36 0.06
-## drive*         0.39    -1.13 0.04
+## drive*           NA       NA   NA
 ## displ          0.97     0.25 0.04
 ## cylinders      1.14     1.76 0.05
-## class*        -0.26    -1.45 0.14
+## class*           NA       NA   NA
 ## lv2            2.33     4.19 0.12
 ## lv4            1.51     2.28 0.24
-## sidi*         -1.61     0.59 0.01
-## aspiration*   -0.19    -1.93 0.04
-## fuelType1*    -0.98     2.17 0.02
-## atvType*      -3.00    11.86 0.02
-## startStop*    -0.31    -1.90 0.01
+## sidi*            NA       NA   NA
+## aspiration*      NA       NA   NA
+## fuelType1*       NA       NA   NA
+## atvType*         NA       NA   NA
+## startStop*       NA       NA   NA
 ```
 
 ```r
@@ -1756,6 +1752,7 @@ favstats(mpg~ atvType, data=cars2020)
 
 ```r
 ##one continous two categorical
+
 favstats(mpg~ car_make+transmission, data=cars2020)
 ```
 
@@ -2026,5 +2023,66 @@ favstats(mpg~ car_make+transmission, data=cars2020)
 #favstats(mpg~ car_make+aspiration, data=cars2020)
 #favstats(mpg~ car_make+fuelType1, data=cars2020)
 ```
+
+## Splitting the data for training and testing
+
+
+```r
+library(rsample)
+set.seed(1729)
+split <- initial_split(cars2020, prop = 0.8, strata = mpg)
+
+
+train <- training(split) 
+test <- testing(split)
+
+# splits the data in a 80:20 ratio (training:testing).
+
+#uses the outcome variable, mpg to stratify. This is done to ensure that the 
+#distribution of the outcome is comparable in both data sets.
+
+#initial_time_split() takes the 1st prop samples for training,instead of random selection.
+```
+
+## Checking the distribution of mpg in the training and tests
+
+
+```r
+# Labeling the train and tests sets then combining them for purposes of making the plot
+
+cars_recon <- bind_rows(mutate(train, Data = "Training"),
+                   mutate(test, Data = "Testing"))
+
+ggplot(cars_recon, aes(x = mpg, fill = Data)) + 
+  geom_density(alpha = 0.4) +
+  ggtitle("Comparing MPG distributions in train and test data sets")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
+ggplot(cars_recon, aes(x = mpg, colour = Data)) + 
+  geom_density(alpha = 0.4) +
+  ggtitle("Comparing MPG distributions in train and test data sets")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
+
+## Exploratory Data Analysis (EDA)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

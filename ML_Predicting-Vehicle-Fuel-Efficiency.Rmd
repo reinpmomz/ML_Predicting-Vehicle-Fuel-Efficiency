@@ -164,6 +164,7 @@ favstats(mpg~ fuelType1, data=cars2020)
 favstats(mpg~ atvType, data=cars2020)
 
 ##one continous two categorical
+
 favstats(mpg~ car_make+transmission, data=cars2020)
 #favstats(mpg~ car_make+aspiration, data=cars2020)
 #favstats(mpg~ car_make+fuelType1, data=cars2020)
@@ -171,5 +172,79 @@ favstats(mpg~ car_make+transmission, data=cars2020)
 
 
 ```
+
+## Splitting the data for training and testing
+
+```{r}
+library(rsample)
+set.seed(1729)
+split <- initial_split(cars2020, prop = 0.8, strata = mpg)
+
+
+train <- training(split) 
+test <- testing(split)
+
+# splits the data in a 80:20 ratio (training:testing).
+
+#uses the outcome variable, mpg to stratify. This is done to ensure that the 
+#distribution of the outcome is comparable in both data sets.
+
+#initial_time_split() takes the 1st prop samples for training,instead of random selection.
+
+
+```
+
+## Checking the distribution of mpg in the training and tests
+
+```{r}
+# Labeling the train and tests sets then combining them for purposes of making the plot
+
+cars_recon <- bind_rows(mutate(train, Data = "Training"),
+                   mutate(test, Data = "Testing"))
+
+ggplot(cars_recon, aes(x = mpg, fill = Data)) + 
+  geom_density(alpha = 0.4) +
+  ggtitle("Comparing MPG distributions in train and test data sets")
+
+ggplot(cars_recon, aes(x = mpg, colour = Data)) + 
+  geom_density(alpha = 0.4) +
+  ggtitle("Comparing MPG distributions in train and test data sets")
+```
+
+## Exploratory Data Analysis (EDA)
+
+```{r}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
