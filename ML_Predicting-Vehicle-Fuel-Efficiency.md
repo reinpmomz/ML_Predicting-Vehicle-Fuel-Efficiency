@@ -244,47 +244,6 @@ summary(cars2020) ##summarizes the dataset
 ```
 
 ```r
-describe(cars2020)
-```
-
-```
-##               vars    n   mean     sd median trimmed    mad   min    max  range
-## car_make*        1 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## model*           2 1164 146.44 188.00  86.00  146.44 124.54  2.00 530.00 528.00
-## mpg              3 1164  23.55   6.40  22.63   22.86   5.21 10.59  57.78  47.19
-## transmission*    4 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## gears            5 1164   7.30   1.97   8.00    7.51   1.48  1.00  10.00   9.00
-## drive*           6 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## displ            7 1164   3.08   1.29   3.00    2.92   1.48  1.00   8.00   7.00
-## cylinders        8 1164   5.57   1.83   6.00    5.37   2.97  3.00  16.00  13.00
-## class*           9 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## lv2             10 1164   1.59   3.94   0.00    0.48   0.00  0.00  22.00  22.00
-## lv4             11 1164   5.25   8.25   0.00    3.79   0.00  0.00  47.00  47.00
-## sidi*           12 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## aspiration*     13 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## fuelType1*      14 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## atvType*        15 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-## startStop*      16 1164    NaN     NA     NA     NaN     NA   Inf   -Inf   -Inf
-##                skew kurtosis   se
-## car_make*        NA       NA   NA
-## model*         0.86    -0.83 5.51
-## mpg            1.64     4.74 0.19
-## transmission*    NA       NA   NA
-## gears         -1.62     3.36 0.06
-## drive*           NA       NA   NA
-## displ          0.97     0.25 0.04
-## cylinders      1.14     1.76 0.05
-## class*           NA       NA   NA
-## lv2            2.33     4.19 0.12
-## lv4            1.51     2.28 0.24
-## sidi*            NA       NA   NA
-## aspiration*      NA       NA   NA
-## fuelType1*       NA       NA   NA
-## atvType*         NA       NA   NA
-## startStop*       NA       NA   NA
-```
-
-```r
 #1. Dolar sign Syntax
 
 table(cars2020$car_make) 
@@ -2071,12 +2030,358 @@ ggplot(cars_recon, aes(x = mpg, colour = Data)) +
 ## Exploratory Data Analysis (EDA)
 
 
+```r
+library(dlookr)
+
+
+# 1. provides descriptive statistics for numerical data
+describe(cars2020) 
+```
+
+```
+## # A tibble: 6 x 26
+##   variable     n    na  mean    sd se_mean   IQR skewness kurtosis   p00   p01
+##   <chr>    <int> <int> <dbl> <dbl>   <dbl> <dbl>    <dbl>    <dbl> <dbl> <dbl>
+## 1 mpg       1164     0 23.6   6.40  0.188   7.03    1.64     4.78   10.6 13.9 
+## 2 gears     1164     0  7.30  1.97  0.0578  2      -1.62     3.39    1    1   
+## 3 displ     1164     0  3.08  1.29  0.0379  1.6     0.970    0.260   1    1.36
+## 4 cylinde~  1164     0  5.57  1.83  0.0535  2       1.14     1.79    3    3   
+## 5 lv2       1164     0  1.59  3.94  0.115   0       2.34     4.22    0    0   
+## 6 lv4       1164     0  5.25  8.25  0.242  13       1.52     2.31    0    0   
+## # ... with 15 more variables: p05 <dbl>, p10 <dbl>, p20 <dbl>, p25 <dbl>,
+## #   p30 <dbl>, p40 <dbl>, p50 <dbl>, p60 <dbl>, p70 <dbl>, p75 <dbl>,
+## #   p80 <dbl>, p90 <dbl>, p95 <dbl>, p99 <dbl>, p100 <dbl>
+```
+
+```r
+# 2. eda_report()
+
+# eda_report() performs EDA on all variables of the data frame or object 
+#(tbl_df,tbl, etc.) that inherits the data frame.
+
+# eda_report() creates an EDA report in two forms: pdf file based on Latex
+# and html file
 
 
 
+##eda_report(cars2020, target = mpg , output_file = "EDACars2020.pdf") #pdf
+
+##eda_report(cars2020, target=mpg, output_format="html", output_file="EDACars2020.html")
+```
+
+### EDA when target variable is numerical variable
+
+#### 1. Cases where predictors are numeric variable
 
 
+```r
+num <- target_by(cars2020, mpg)
 
+#general relationship between target variable fuel-efficiency (mpg) and 
+#predictor engine size (displacement)
+
+#we show the result of simple regression model of target ~ predictor relation
+
+num_num <- relate(num, displ)
+num_num
+```
+
+```
+## 
+## Call:
+## lm(formula = formula_str, data = data)
+## 
+## Coefficients:
+## (Intercept)        displ  
+##      34.052       -3.413
+```
+
+```r
+summary(num_num)
+```
+
+```
+## 
+## Call:
+## lm(formula = formula_str, data = data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -7.9928 -2.7259 -0.9033  1.4828 29.1912 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  34.0522     0.3506   97.12   <2e-16 ***
+## displ        -3.4131     0.1051  -32.49   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 4.636 on 1162 degrees of freedom
+## Multiple R-squared:  0.476,	Adjusted R-squared:  0.4755 
+## F-statistic:  1056 on 1 and 1162 DF,  p-value: < 2.2e-16
+```
+
+```r
+# visualize the relationship between the target variable and the predictor
+plot(num_num)
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+```r
+#The relationship between 'mpg' and 'displ' is represented as a scatter plot. 
+#The plot on the left represents the scatter plot of 'mpg' and 'displ' and the 
+#confidence interval of the regression line and the regression line. 
+
+#The plot on the right represents the relationship between the original data and 
+#the predicted value of the linear model as a scatter plot. If there is a linear 
+#relationship between the two variables, the observations will converge on the 
+#red diagonal in the scatter plot.
+
+#The scatter plot of the data with a large number of observations is output as 
+#overlapping points. This makes it difficult to judge the relationship between the two variables. It also takes a long time to perform the visualization. 
+#In this case, the above problem can be solved by hexabin plot.
+
+#In plot(), the hex_thres argument provides a basis for drawing hexabin plots. For data with more than this number of observations, draw a hexabin plot.
+
+
+ggplot(data = train, 
+       aes(x = displ, y = mpg)) +
+  geom_point(alpha = 0.25) + geom_smooth() + 
+  xlab("Engine displace (L)") + 
+  ylab("Miles per gallon") + 
+  ggtitle("Fuel-efficiency vs Engine Size (displacement)")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-7-2.png)<!-- -->
+
+#### 2. Cases where predictors are categorical variable
+
+
+```r
+#difference in distribution of fuel-efficiency for each transmission type
+
+#shows the result of performing one-way ANOVA of target ~ predictor relation
+
+cars2020$transmission <- factor(cars2020$transmission)
+num1 <- target_by(cars2020, mpg)
+
+num_cat <- relate(num1, transmission)
+num_cat
+```
+
+```
+## Analysis of Variance Table
+## 
+## Response: mpg
+##                Df Sum Sq Mean Sq F value    Pr(>F)    
+## transmission    2  14258  7128.9  247.82 < 2.2e-16 ***
+## Residuals    1161  33398    28.8                      
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+```r
+summary(num_cat)
+```
+
+```
+## 
+## Call:
+## lm(formula = formula(formula_str), data = data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -13.908  -3.788  -0.086   2.905  33.282 
+## 
+## Coefficients:
+##                    Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)         21.7928     0.1882 115.784  < 2e-16 ***
+## transmissionCVT     11.2557     0.5101  22.067  < 2e-16 ***
+## transmissionManual   2.7073     0.4048   6.688  3.5e-11 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 5.363 on 1161 degrees of freedom
+## Multiple R-squared:  0.2992,	Adjusted R-squared:  0.298 
+## F-statistic: 247.8 on 2 and 1161 DF,  p-value: < 2.2e-16
+```
+
+```r
+plot(num_cat)
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+```r
+#object of type 'closure' is not subsettable error happens when you’re trying to 
+#treat a function like a list, vector, or data frame. 
+#To fix it, start treating the function like a function.
+
+
+ggplot(data = train, aes(x = transmission, y = mpg)) + 
+  geom_boxplot() + 
+  xlab("Transmission Type") + 
+  ylab("Miles per gallon") + 
+  ggtitle("Transmission type and fuel efficiency of 2020 cars")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+
+### EDA when target variable is categorical variable
+
+#### 1. Cases where predictors are numeric variable
+
+```r
+categ <- target_by(cars2020, transmission)
+
+#the descriptive statistics are shown for each level of the target variable
+
+cat_num <- relate(categ, mpg)
+cat_num
+```
+
+```
+## # A tibble: 4 x 27
+##   variable transmission     n    na  mean    sd se_mean   IQR skewness kurtosis
+##   <chr>    <fct>        <dbl> <dbl> <dbl> <dbl>   <dbl> <dbl>    <dbl>    <dbl>
+## 1 mpg      Automatic      812     0  21.8  3.96   0.139  5.76    0.189   -0.262
+## 2 mpg      CVT            128     0  33.0  7.55   0.667  7.45    0.981    0.779
+## 3 mpg      Manual         224     0  24.5  7.77   0.519  9.03    1.50     3.61 
+## 4 mpg      total         1164     0  23.6  6.40   0.188  7.03    1.64     4.78 
+## # ... with 17 more variables: p00 <dbl>, p01 <dbl>, p05 <dbl>, p10 <dbl>,
+## #   p20 <dbl>, p25 <dbl>, p30 <dbl>, p40 <dbl>, p50 <dbl>, p60 <dbl>,
+## #   p70 <dbl>, p75 <dbl>, p80 <dbl>, p90 <dbl>, p95 <dbl>, p99 <dbl>,
+## #   p100 <dbl>
+```
+
+```r
+summary(cat_num)
+```
+
+```
+##    variable            transmission       n              na         mean      
+##  Length:4           Automatic:1     Min.   : 128   Min.   :0   Min.   :21.79  
+##  Class :character   CVT      :1     1st Qu.: 200   1st Qu.:0   1st Qu.:23.11  
+##  Mode  :character   Manual   :1     Median : 518   Median :0   Median :24.03  
+##                     total    :1     Mean   : 582   Mean   :0   Mean   :25.72  
+##                                     3rd Qu.: 900   3rd Qu.:0   3rd Qu.:26.64  
+##                                     Max.   :1164   Max.   :0   Max.   :33.05  
+##        sd           se_mean            IQR           skewness     
+##  Min.   :3.956   Min.   :0.1388   Min.   :5.764   Min.   :0.1887  
+##  1st Qu.:5.790   1st Qu.:0.1754   1st Qu.:6.716   1st Qu.:0.7830  
+##  Median :6.975   Median :0.3535   Median :7.244   Median :1.2404  
+##  Mean   :6.419   Mean   :0.3782   Mean   :7.321   Mean   :1.0785  
+##  3rd Qu.:7.605   3rd Qu.:0.5563   3rd Qu.:7.849   3rd Qu.:1.5359  
+##  Max.   :7.772   Max.   :0.6672   Max.   :9.032   Max.   :1.6444  
+##     kurtosis            p00             p01             p05       
+##  Min.   :-0.2616   Min.   :10.59   Min.   :11.49   Min.   :15.00  
+##  1st Qu.: 0.5186   1st Qu.:10.59   1st Qu.:13.29   1st Qu.:15.27  
+##  Median : 2.1928   Median :11.63   Median :13.89   Median :15.44  
+##  Mean   : 2.2253   Mean   :13.60   Mean   :15.20   Mean   :17.15  
+##  3rd Qu.: 3.8995   3rd Qu.:14.64   3rd Qu.:15.80   3rd Qu.:17.33  
+##  Max.   : 4.7772   Max.   :20.54   Max.   :21.52   Max.   :22.73  
+##       p10             p20             p25             p30       
+##  Min.   :16.66   Min.   :18.00   Min.   :18.75   Min.   :19.62  
+##  1st Qu.:16.76   1st Qu.:18.44   1st Qu.:19.13   1st Qu.:19.90  
+##  Median :16.87   Median :18.63   Median :19.29   Median :20.02  
+##  Mean   :18.89   Mean   :20.56   Mean   :21.39   Mean   :22.12  
+##  3rd Qu.:18.99   3rd Qu.:20.76   3rd Qu.:21.55   3rd Qu.:22.25  
+##  Max.   :25.15   Max.   :27.00   Max.   :28.21   Max.   :28.83  
+##       p40             p50             p60             p70       
+##  Min.   :20.77   Min.   :21.84   Min.   :22.84   Min.   :23.96  
+##  1st Qu.:20.94   1st Qu.:22.43   1st Qu.:23.72   1st Qu.:25.09  
+##  Median :21.20   Median :22.85   Median :24.83   Median :26.28  
+##  Mean   :23.36   Mean   :24.81   Mean   :26.41   Mean   :27.87  
+##  3rd Qu.:23.62   3rd Qu.:25.23   3rd Qu.:27.52   3rd Qu.:29.06  
+##  Max.   :30.25   Max.   :31.71   Max.   :33.12   Max.   :34.95  
+##       p75             p80             p90             p95       
+##  Min.   :24.51   Min.   :25.04   Min.   :27.00   Min.   :28.23  
+##  1st Qu.:25.90   1st Qu.:26.77   1st Qu.:29.57   1st Qu.:32.75  
+##  Median :27.33   Median :28.40   Median :31.07   Median :35.30  
+##  Mean   :28.71   Mean   :30.07   Mean   :33.12   Mean   :37.03  
+##  3rd Qu.:30.14   3rd Qu.:31.70   3rd Qu.:34.62   3rd Qu.:39.58  
+##  Max.   :35.67   Max.   :38.43   Max.   :43.35   Max.   :49.29  
+##       p99             p100      
+##  Min.   :30.68   Min.   :35.00  
+##  1st Qu.:44.56   1st Qu.:50.52  
+##  Median :50.70   Median :56.74  
+##  Mean   :46.48   Mean   :51.57  
+##  3rd Qu.:52.62   3rd Qu.:57.78  
+##  Max.   :53.84   Max.   :57.78
+```
+
+```r
+plot(cat_num)
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+```r
+ggplot(data = train, aes(x = mpg, fill = transmission)) + 
+  geom_density(alpha = 0.4) +
+  ggtitle("Comparing Transmission type distributions and MPG")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+
+#### 2. Cases where predictors are categorical variable
+
+
+```r
+cars2020$drive <- factor(cars2020$drive)
+categ1 <- target_by(cars2020, transmission)
+
+#we show the contigency table of two variables. an independence test is performed 
+#on the contigency table.
+
+cat_cat <- relate(categ1, drive)
+cat_cat
+```
+
+```
+##             drive
+## transmission 4WD AWD FWD PT 4WD RWD
+##    Automatic 141 282 141     25 223
+##    CVT         9  31  84      2   2
+##    Manual     14  65  73      3  69
+```
+
+```r
+summary(cat_cat)
+```
+
+```
+## Call: xtabs(formula = formula_str, data = data, addNA = TRUE)
+## Number of cases in table: 1164 
+## Number of factors: 2 
+## Test for independence of all factors:
+## 	Chisq = 166.52, df = 8, p-value = 6.904e-32
+## 	Chi-squared approximation may be incorrect
+```
+
+```r
+plot(cat_cat)
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+### EDA: MPG, displacement and transmission type
+
+```r
+#scatter plots of fuel efficiency (mpg) vs engine size (displacement) differ across transmission types
+
+ggplot(data = train, 
+       aes(x = displ, y = mpg)) +
+  geom_point(alpha = 0.25) + 
+  geom_smooth()+
+  facet_wrap(~transmission) + 
+  xlab("Engine displace (L)") + 
+  ylab("Miles per gallon") + 
+  ggtitle("Fuel-efficiency vs Engine Size (displacement)")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 
 

@@ -88,7 +88,6 @@ names(cars2020)[1] <- "car_make" #rename by index column name with base r functi
 #summary statistics
 summary(cars2020) ##summarizes the dataset
 
-describe(cars2020)
 
 #1. Dolar sign Syntax
 
@@ -215,30 +214,164 @@ ggplot(cars_recon, aes(x = mpg, colour = Data)) +
 
 ```{r}
 
+library(dlookr)
+
+
+# 1. provides descriptive statistics for numerical data
+describe(cars2020) 
+
+# 2. eda_report()
+
+# eda_report() performs EDA on all variables of the data frame or object 
+#(tbl_df,tbl, etc.) that inherits the data frame.
+
+# eda_report() creates an EDA report in two forms: pdf file based on Latex
+# and html file
 
 
 
+##eda_report(cars2020, target = mpg , output_file = "EDACars2020.pdf") #pdf
+
+##eda_report(cars2020, target=mpg, output_format="html", output_file="EDACars2020.html")
 
 
+```
+
+### EDA when target variable is numerical variable
+
+#### 1. Cases where predictors are numeric variable
+
+```{r}
+
+num <- target_by(cars2020, mpg)
+
+#general relationship between target variable fuel-efficiency (mpg) and 
+#predictor engine size (displacement)
+
+#we show the result of simple regression model of target ~ predictor relation
+
+num_num <- relate(num, displ)
+num_num
+
+summary(num_num)
+
+# visualize the relationship between the target variable and the predictor
+plot(num_num)
+
+#The relationship between 'mpg' and 'displ' is represented as a scatter plot. 
+#The plot on the left represents the scatter plot of 'mpg' and 'displ' and the 
+#confidence interval of the regression line and the regression line. 
+
+#The plot on the right represents the relationship between the original data and 
+#the predicted value of the linear model as a scatter plot. If there is a linear 
+#relationship between the two variables, the observations will converge on the 
+#red diagonal in the scatter plot.
+
+#The scatter plot of the data with a large number of observations is output as 
+#overlapping points. This makes it difficult to judge the relationship between the two variables. It also takes a long time to perform the visualization. 
+#In this case, the above problem can be solved by hexabin plot.
+
+#In plot(), the hex_thres argument provides a basis for drawing hexabin plots. For data with more than this number of observations, draw a hexabin plot.
 
 
+ggplot(data = train, 
+       aes(x = displ, y = mpg)) +
+  geom_point(alpha = 0.25) + geom_smooth() + 
+  xlab("Engine displace (L)") + 
+  ylab("Miles per gallon") + 
+  ggtitle("Fuel-efficiency vs Engine Size (displacement)")
+
+```
+
+#### 2. Cases where predictors are categorical variable
+
+```{r}
 
 
+#difference in distribution of fuel-efficiency for each transmission type
+
+#shows the result of performing one-way ANOVA of target ~ predictor relation
+
+cars2020$transmission <- factor(cars2020$transmission)
+num1 <- target_by(cars2020, mpg)
+
+num_cat <- relate(num1, transmission)
+num_cat
+
+summary(num_cat)
+
+plot(num_cat)
+
+#object of type 'closure' is not subsettable error happens when you’re trying to 
+#treat a function like a list, vector, or data frame. 
+#To fix it, start treating the function like a function.
 
 
-
-
-
+ggplot(data = train, aes(x = transmission, y = mpg)) + 
+  geom_boxplot() + 
+  xlab("Transmission Type") + 
+  ylab("Miles per gallon") + 
+  ggtitle("Transmission type and fuel efficiency of 2020 cars")
 
 
 
 ```
 
+### EDA when target variable is categorical variable
 
+#### 1. Cases where predictors are numeric variable
+```{r}
 
+categ <- target_by(cars2020, transmission)
 
+#the descriptive statistics are shown for each level of the target variable
 
+cat_num <- relate(categ, mpg)
+cat_num
 
+summary(cat_num)
+
+plot(cat_num)
+
+ggplot(data = train, aes(x = mpg, fill = transmission)) + 
+  geom_density(alpha = 0.4) +
+  ggtitle("Comparing Transmission type distributions and MPG")
+```
+
+#### 2. Cases where predictors are categorical variable
+
+```{r}
+cars2020$drive <- factor(cars2020$drive)
+categ1 <- target_by(cars2020, transmission)
+
+#we show the contigency table of two variables. an independence test is performed 
+#on the contigency table.
+
+cat_cat <- relate(categ1, drive)
+cat_cat
+
+summary(cat_cat)
+
+plot(cat_cat)
+
+#visualizes the relationship between the target variable and the predictor by mosaic plot
+
+```
+
+### EDA: MPG, displacement and transmission type
+```{r}
+
+#scatter plots of fuel efficiency (mpg) vs engine size (displacement) differ across transmission types
+
+ggplot(data = train, 
+       aes(x = displ, y = mpg)) +
+  geom_point(alpha = 0.25) + 
+  geom_smooth()+
+  facet_wrap(~transmission) + 
+  xlab("Engine displace (L)") + 
+  ylab("Miles per gallon") + 
+  ggtitle("Fuel-efficiency vs Engine Size (displacement)")
+```
 
 
 
