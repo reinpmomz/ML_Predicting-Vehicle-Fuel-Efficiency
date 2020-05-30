@@ -354,7 +354,40 @@ summary(cat_cat)
 
 plot(cat_cat)
 
+
 #visualizes the relationship between the target variable and the predictor by mosaic plot
+
+library(ggmosaic)
+
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(transmission, drive), fill = transmission)) +
+  labs(title = "Transmission type by drivetrain - 1 ~ W(fill=Y) + Y + X", 
+       subtitle = "f(Transmission type , drivetrain)") +
+xlab("Drivetrain") + 
+  ylab("Transmission Type")
+
+
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(drive), fill = drive)) +
+  labs(title = "drivetrain - 1 ~ W(fill=X) + X", 
+       subtitle = "f(drivetrain)")+
+xlab("Drivetrain")
+
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(drive), fill = transmission)) +
+  labs(title = "drivetrain - 1 ~ W(fill=Y) + X", 
+       subtitle = "f(drivetrain)")+
+xlab("Drivetrain")
+
+
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(transmission, drive), fill = transmission, conds=product(sidi))) +
+  labs(title = "Transmission type by drivetrain - 1 ~ W(fill=Y) + Y|Z + X", 
+       subtitle = "f(Transmission type|sidi , drivetrain)") +
+xlab("y") + 
+  ylab("drivetrain")+
+  facet_grid(sidi~.)+
+  coord_flip()
 
 ```
 
@@ -372,8 +405,212 @@ ggplot(data = train,
   ylab("Miles per gallon") + 
   ggtitle("Fuel-efficiency vs Engine Size (displacement)")
 ```
+## Finding a fitting distribution for the mpg variable
+
+```{r}
+
+library(car)
+library(MASS) #So that distributions that must be non-zero can make sense of my data
+
+qqp(cars2020$mpg+1, "norm", main="Q-Q Plot ~ mpg+1 Normal model")
+
+qqp(cars2020$mpg+1, "lnorm", main="Q-Q Plot ~ mpg+1 LogNormal model") #lnorm is lognormal
+
+qqp(cars2020$mpg+1, "exp", main="Q-Q Plot ~ mpg+1 Exponential model")
 
 
+#qqp requires estimates of the parameters of the negative binomial, Poisson
+# and gamma distributions. You can generate estimates using the fitdistr function.
+
+#negative binomial and gamma distributions can only handle positive numbers.
+
+#Poisson distribution can only handle positive whole numbers.
+
+#Binomial and Poisson distributions are different from the others because they are
+#discrete rather than continuous, which means they quantify distinct,
+#countable events or the probability of these events
+
+pois <- fitdistr(cars2020$mpg+1, "Poisson")
+qqp(cars2020$mpg+1, "pois", lambda=pois$estimate, main="Q-Q Plot ~ mpg+1 Poisson model")
+
+
+gamma <- fitdistr(cars2020$mpg+1, "gamma",
+list(shape = 1, rate = 0.1), lower = 0.4)
+qqp(cars2020$mpg+1, "gamma", shape = gamma$estimate[[1]], rate =
+gamma$estimate[[2]], main="Q-Q Plot ~ mpg+1 Gamma model")
+
+
+weibull <- fitdistr(cars2020$mpg+1, "weibull")
+qqp(cars2020$mpg+1, "weibull", shape = weibull$estimate[[1]],
+scale=weibull$estimate[[2]], main="Q-Q Plot ~ mpg+1 Weibull model")
+
+
+```
+
+## Creating a linear model
+
+### 1. Ordinary Least Squares
+
+
+```{r}
+# Deselect the 2 column variables
+id_cols <- c("car_make", "model")
+train1 <- train[,!(names(train) %in% id_cols)]
+
+
+#To fit a linear model using the method of (OLS) we use the lm function
+ols_model <- lm(mpg~., data = train1)
+ols_model
+
+summary(ols_model)
+
+```
+
+### 2. Alternate Ordinary Least Squares
+```{r}
+
+#This alternative model differs from the previous in using an outcome of log(mpg) 
+#This choice is suggested because of the lognormal nature of the distribution of mpg
+
+
+ols_log_model <- lm(log(mpg)~., data = train1)
+summary(ols_log_model)
+```
+
+## Decision Tree models
+```{r}
+
+#fitting decision tree models. Each decision tree model will formulated with an 
+#equivalent outcome to one of the OLS models
+
+library(rpart)
+library(rpart.plot)
+
+dt_model <- rpart(mpg~., data = train1)
+rpart.plot(dt_model)
+
+
+dt_log_model <- rpart(log(mpg)~., data = train1)
+rpart.plot(dt_log_model)
+
+#Note the values displayed at the nodes represent the predicted log of the mpg variable.
+#To convert these to interpretable fuel-efficiency values you use the exp function.
+
+
+
+```
+
+## Random Forest models
+
+```{r}
+#we formulate two random forest models (one for each of the predictors)
+
+library(randomForest)
+set.seed(2001)
+rf_model <- randomForest(mpg~., data = train1)
+set.seed(99)
+rf_log_model <- randomForest(log(mpg)~., data = train1) 
+```
+
+## Performance of the Models
+
+### Collating model estimates
+
+```{r}
+#add the 6 model estimates to a data frame that also contains the actual mpg values 
+#as well as the model predictors.
+
+train_results <- mutate(train1, 
+                        ols = predict(ols_model, train1),
+                        ols_log = exp(predict(ols_log_model, train1)),
+                        dt = predict(dt_model, train1),
+                        dt_log  = exp(predict(dt_log_model, train1)),
+                        rf = predict(rf_model, train1),
+                        rf_log = exp(predict(rf_log_model, train1))
+                        )
+
+```
+
+### Visualizing model performance
+
+```{r}
+#visualize the model performance by graphing the model estimates vs the actual values 
+#of the fuel efficiency
+
+#We reshape the data to be used easily with 'ggplot2'
+
+
+library(tidyr)
+train_results_long <- pivot_longer(train_results, ols:rf_log, 
+                                   names_to = "method", values_to = "estimate")
+
+train_results_long1 <- train_results_long[,c('mpg', 'method','estimate')]
+
+head(train_results_long1)
+tail(train_results_long1)
+
+#plot of the model estimates vs the actual MPG values
+
+ggplot(data = train_results_long1, 
+       aes(x = mpg, y = estimate)) + 
+  geom_point(shape = 21, colour = "blue") + 
+  facet_wrap(~method, ncol = 2) + 
+  geom_abline(slope = 1, intercept = 0)   + 
+  xlim(c(0,60)) + ylim(c(0,60)) + theme_minimal()
+
+
+#Points on the diagonal line correspond to cars for which the model estimated value
+#and the actual mpg value are very close. Points that are above or below the line 
+#correspond to cars for which the model overestimates or underestimates the mpg 
+#respectively.
+
+
+#Inspecting these plots visually, it seems that the random forest models fit more 
+#closely than the OLS models, which fit more closely than the decision tree models.
+```
+
+### Getting model metrics
+
+```{r}
+
+#The yardstick::metrics function can be used for summary statistics for a model. 
+#It requires that the model estimates be available in as a column of a data frame 
+#that also contains a column of corresponding truth values.
+
+
+#The three reported metrics are:
+#1. Root mean squared error
+# 2. R2
+# 3. Mean absolute error
+
+library(yardstick)
+
+metric_ols <- metrics(train_results, truth = mpg, estimate = ols)
+metric_ols
+
+metric_ols_log <- metrics(train_results, truth = mpg, estimate = ols_log)
+metric_ols_log
+
+metric_dt <- metrics(train_results, truth = mpg, estimate = dt)
+metric_dt
+
+metric_dt_log <- metrics(train_results, truth = mpg, estimate = dt_log)
+metric_dt_log
+
+metric_rf <- metrics(train_results, truth = mpg, estimate = rf)
+metric_rf
+
+metric_rf_log <- metrics(train_results, truth = mpg, estimate = rf_log)
+metric_rf_log
+
+```
+
+### Comparing models using the metrics (RMSE, R2, MAE)
+
+
+```{r}
+
+```
 
 
 

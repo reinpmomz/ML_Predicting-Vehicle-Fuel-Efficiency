@@ -1,7 +1,7 @@
 ---
 title: "ML_Predicting-Vehicle-Fuel-Efficiency"
 author: "Reinp"
-date: "2020-05-29"
+date: "2020-05-30"
 output:
   html_document: 
     keep_md: yes
@@ -2366,6 +2366,54 @@ plot(cat_cat)
 
 ![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
+```r
+#visualizes the relationship between the target variable and the predictor by mosaic plot
+
+library(ggmosaic)
+
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(transmission, drive), fill = transmission)) +
+  labs(title = "Transmission type by drivetrain - 1 ~ W(fill=Y) + Y + X", 
+       subtitle = "f(Transmission type , drivetrain)") +
+xlab("Drivetrain") + 
+  ylab("Transmission Type")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
+
+```r
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(drive), fill = drive)) +
+  labs(title = "drivetrain - 1 ~ W(fill=X) + X", 
+       subtitle = "f(drivetrain)")+
+xlab("Drivetrain")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-10-3.png)<!-- -->
+
+```r
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(drive), fill = transmission)) +
+  labs(title = "drivetrain - 1 ~ W(fill=Y) + X", 
+       subtitle = "f(drivetrain)")+
+xlab("Drivetrain")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-10-4.png)<!-- -->
+
+```r
+ggplot(data = train) + 
+  geom_mosaic(aes(x = product(transmission, drive), fill = transmission, conds=product(sidi))) +
+  labs(title = "Transmission type by drivetrain - 1 ~ W(fill=Y) + Y|Z + X", 
+       subtitle = "f(Transmission type|sidi , drivetrain)") +
+xlab("y") + 
+  ylab("drivetrain")+
+  facet_grid(sidi~.)+
+  coord_flip()
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-10-5.png)<!-- -->
+
 ### EDA: MPG, displacement and transmission type
 
 ```r
@@ -2382,6 +2430,512 @@ ggplot(data = train,
 ```
 
 ![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+## Finding a fitting distribution for the mpg variable
+
+
+```r
+library(car)
+library(MASS) #So that distributions that must be non-zero can make sense of my data
+
+qqp(cars2020$mpg+1, "norm", main="Q-Q Plot ~ mpg+1 Normal model")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+```
+## [1] 933 621
+```
+
+```r
+qqp(cars2020$mpg+1, "lnorm", main="Q-Q Plot ~ mpg+1 LogNormal model") #lnorm is lognormal
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+
+```
+## [1] 933 621
+```
+
+```r
+qqp(cars2020$mpg+1, "exp", main="Q-Q Plot ~ mpg+1 Exponential model")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-12-3.png)<!-- -->
+
+```
+## [1] 933 621
+```
+
+```r
+#qqp requires estimates of the parameters of the negative binomial, Poisson
+# and gamma distributions. You can generate estimates using the fitdistr function.
+
+#negative binomial and gamma distributions can only handle positive numbers.
+
+#Poisson distribution can only handle positive whole numbers.
+
+#Binomial and Poisson distributions are different from the others because they are
+#discrete rather than continuous, which means they quantify distinct,
+#countable events or the probability of these events
+
+pois <- fitdistr(cars2020$mpg+1, "Poisson")
+qqp(cars2020$mpg+1, "pois", lambda=pois$estimate, main="Q-Q Plot ~ mpg+1 Poisson model")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-12-4.png)<!-- -->
+
+```
+## [1] 933 621
+```
+
+```r
+gamma <- fitdistr(cars2020$mpg+1, "gamma",
+list(shape = 1, rate = 0.1), lower = 0.4)
+qqp(cars2020$mpg+1, "gamma", shape = gamma$estimate[[1]], rate =
+gamma$estimate[[2]], main="Q-Q Plot ~ mpg+1 Gamma model")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-12-5.png)<!-- -->
+
+```
+## [1] 933 621
+```
+
+```r
+weibull <- fitdistr(cars2020$mpg+1, "weibull")
+qqp(cars2020$mpg+1, "weibull", shape = weibull$estimate[[1]],
+scale=weibull$estimate[[2]], main="Q-Q Plot ~ mpg+1 Weibull model")
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-12-6.png)<!-- -->
+
+```
+## [1] 933 621
+```
+
+## Creating a linear model
+
+### 1. Ordinary Least Squares
+
+
+
+```r
+# Deselect the 2 column variables
+id_cols <- c("car_make", "model")
+train1 <- train[,!(names(train) %in% id_cols)]
+
+
+#To fit a linear model using the method of (OLS) we use the lm function
+ols_model <- lm(mpg~., data = train1)
+ols_model
+```
+
+```
+## 
+## Call:
+## lm(formula = mpg ~ ., data = train1)
+## 
+## Coefficients:
+##                (Intercept)             transmissionCVT  
+##                   39.33753                     3.20564  
+##         transmissionManual                       gears  
+##                    0.04928                    -0.28849  
+##                   driveAWD                    driveFWD  
+##                    0.18354                     3.71183  
+##                drivePT 4WD                    driveRWD  
+##                    1.04471                     1.15595  
+##                      displ                   cylinders  
+##                   -1.80544                    -0.46562  
+##                 classLarge           classMid St Wagon  
+##                   -0.25964                    -0.01333  
+##               classMidsize            classMinicompact  
+##                    0.44561                    -1.50638  
+##               classMinivan          classPassenger Van  
+##                   -6.40468                    -6.76966  
+##       classSm Pickup Truck            classSm St Wagon  
+##                   -6.12654                     0.09396  
+##                classSm SUV                    classSPV  
+##                   -3.29938                    -6.18484  
+##      classStd Pickup Truck                classStd SUV  
+##                   -4.06379                    -3.60436  
+##            classSubcompact             classTwo Seater  
+##                   -0.38888                    -2.03608  
+##                        lv2                         lv4  
+##                   -0.07743                    -0.05236  
+##                      sidiY             aspirationSuper  
+##                    0.72650                    -1.79538  
+##      aspirationSuper+Turbo             aspirationTurbo  
+##                   -2.27298                    -2.97902  
+## fuelType1Midgrade Gasoline   fuelType1Premium Gasoline  
+##                   -1.14707                    -2.74374  
+##  fuelType1Regular Gasoline                  atvTypeFFV  
+##                   -2.11444                    -3.62581  
+##              atvTypeHybrid                 atvTypeNone  
+##                    2.60985                    -3.01049  
+##      atvTypePlug-in Hybrid                  startStopY  
+##                         NA                     1.76579
+```
+
+```r
+summary(ols_model)
+```
+
+```
+## 
+## Call:
+## lm(formula = mpg ~ ., data = train1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -7.4451 -1.5039  0.0256  1.4984 18.4379 
+## 
+## Coefficients: (1 not defined because of singularities)
+##                            Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                39.33753    1.05957  37.126  < 2e-16 ***
+## transmissionCVT             3.20564    0.39999   8.014 3.44e-15 ***
+## transmissionManual          0.04928    0.27904   0.177 0.859867    
+## gears                      -0.28849    0.06629  -4.352 1.50e-05 ***
+## driveAWD                    0.18354    0.31012   0.592 0.554118    
+## driveFWD                    3.71183    0.36504  10.168  < 2e-16 ***
+## drivePT 4WD                 1.04471    0.62608   1.669 0.095536 .  
+## driveRWD                    1.15595    0.32103   3.601 0.000335 ***
+## displ                      -1.80544    0.26539  -6.803 1.87e-11 ***
+## cylinders                  -0.46562    0.16171  -2.879 0.004080 ** 
+## classLarge                 -0.25964    0.44778  -0.580 0.562169    
+## classMid St Wagon          -0.01333    0.98020  -0.014 0.989151    
+## classMidsize                0.44561    0.37282   1.195 0.232314    
+## classMinicompact           -1.50638    0.65828  -2.288 0.022348 *  
+## classMinivan               -6.40468    1.45903  -4.390 1.27e-05 ***
+## classPassenger Van         -6.76966    2.12311  -3.189 0.001479 ** 
+## classSm Pickup Truck       -6.12654    0.79912  -7.667 4.59e-14 ***
+## classSm St Wagon            0.09396    0.65624   0.143 0.886182    
+## classSm SUV                -3.29938    0.41144  -8.019 3.32e-15 ***
+## classSPV                   -6.18484    0.75260  -8.218 7.21e-16 ***
+## classStd Pickup Truck      -4.06379    0.59454  -6.835 1.51e-11 ***
+## classStd SUV               -3.60436    0.48867  -7.376 3.72e-13 ***
+## classSubcompact            -0.38888    0.45717  -0.851 0.395201    
+## classTwo Seater            -2.03608    0.61029  -3.336 0.000884 ***
+## lv2                        -0.07743    0.03857  -2.007 0.045028 *  
+## lv4                        -0.05236    0.01864  -2.809 0.005081 ** 
+## sidiY                       0.72650    0.29891   2.430 0.015274 *  
+## aspirationSuper            -1.79538    0.55081  -3.260 0.001158 ** 
+## aspirationSuper+Turbo      -2.27298    1.26201  -1.801 0.072028 .  
+## aspirationTurbo            -2.97902    0.31597  -9.428  < 2e-16 ***
+## fuelType1Midgrade Gasoline -1.14707    1.27397  -0.900 0.368153    
+## fuelType1Premium Gasoline  -2.74374    0.95625  -2.869 0.004211 ** 
+## fuelType1Regular Gasoline  -2.11444    0.96458  -2.192 0.028630 *  
+## atvTypeFFV                 -3.62581    0.90125  -4.023 6.23e-05 ***
+## atvTypeHybrid               2.60985    0.64928   4.020 6.32e-05 ***
+## atvTypeNone                -3.01049    0.56948  -5.286 1.57e-07 ***
+## atvTypePlug-in Hybrid            NA         NA      NA       NA    
+## startStopY                  1.76579    0.24750   7.135 2.00e-12 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 2.765 on 896 degrees of freedom
+## Multiple R-squared:  0.826,	Adjusted R-squared:  0.8191 
+## F-statistic: 118.2 on 36 and 896 DF,  p-value: < 2.2e-16
+```
+
+### 2. Alternate Ordinary Least Squares
+
+```r
+#This alternative model differs from the previous in using an outcome of log(mpg) 
+#This choice is suggested because of the lognormal nature of the distribution of mpg
+
+
+ols_log_model <- lm(log(mpg)~., data = train1)
+summary(ols_log_model)
+```
+
+```
+## 
+## Call:
+## lm(formula = log(mpg) ~ ., data = train1)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.31347 -0.05100 -0.00161  0.06017  0.38168 
+## 
+## Coefficients: (1 not defined because of singularities)
+##                              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                 3.8220213  0.0351682 108.678  < 2e-16 ***
+## transmissionCVT             0.1109602  0.0132760   8.358 2.42e-16 ***
+## transmissionManual         -0.0106554  0.0092615  -1.151 0.250240    
+## gears                      -0.0048106  0.0022002  -2.186 0.029043 *  
+## driveAWD                    0.0072863  0.0102932   0.708 0.479203    
+## driveFWD                    0.1238549  0.0121160  10.222  < 2e-16 ***
+## drivePT 4WD                 0.0300485  0.0207803   1.446 0.148524    
+## driveRWD                    0.0470704  0.0106552   4.418 1.12e-05 ***
+## displ                      -0.0827641  0.0088084  -9.396  < 2e-16 ***
+## cylinders                  -0.0278904  0.0053673  -5.196 2.52e-07 ***
+## classLarge                 -0.0093175  0.0148624  -0.627 0.530872    
+## classMid St Wagon          -0.0068622  0.0325338  -0.211 0.832993    
+## classMidsize                0.0112245  0.0123743   0.907 0.364608    
+## classMinicompact           -0.0463353  0.0218488  -2.121 0.034219 *  
+## classMinivan               -0.1803056  0.0484266  -3.723 0.000209 ***
+## classPassenger Van         -0.3492118  0.0704682  -4.956 8.62e-07 ***
+## classSm Pickup Truck       -0.2367447  0.0265234  -8.926  < 2e-16 ***
+## classSm St Wagon           -0.0149604  0.0217811  -0.687 0.492355    
+## classSm SUV                -0.1123641  0.0136562  -8.228 6.67e-16 ***
+## classSPV                   -0.2506623  0.0249796 -10.035  < 2e-16 ***
+## classStd Pickup Truck      -0.1538307  0.0197333  -7.795 1.78e-14 ***
+## classStd SUV               -0.1404778  0.0162194  -8.661  < 2e-16 ***
+## classSubcompact            -0.0104613  0.0151738  -0.689 0.490730    
+## classTwo Seater            -0.0749875  0.0202562  -3.702 0.000227 ***
+## lv2                        -0.0017083  0.0012803  -1.334 0.182452    
+## lv4                        -0.0011513  0.0006187  -1.861 0.063076 .  
+## sidiY                       0.0348726  0.0099211   3.515 0.000462 ***
+## aspirationSuper            -0.0928291  0.0182818  -5.078 4.65e-07 ***
+## aspirationSuper+Turbo      -0.1203417  0.0418875  -2.873 0.004162 ** 
+## aspirationTurbo            -0.1193375  0.0104872 -11.379  < 2e-16 ***
+## fuelType1Midgrade Gasoline -0.0705227  0.0422843  -1.668 0.095700 .  
+## fuelType1Premium Gasoline  -0.1555444  0.0317389  -4.901 1.13e-06 ***
+## fuelType1Regular Gasoline  -0.1407809  0.0320154  -4.397 1.23e-05 ***
+## atvTypeFFV                 -0.1026318  0.0299132  -3.431 0.000629 ***
+## atvTypeHybrid               0.0734123  0.0215504   3.407 0.000687 ***
+## atvTypeNone                -0.0913198  0.0189017  -4.831 1.60e-06 ***
+## atvTypePlug-in Hybrid              NA         NA      NA       NA    
+## startStopY                  0.0544453  0.0082147   6.628 5.88e-11 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.09178 on 896 degrees of freedom
+## Multiple R-squared:  0.8718,	Adjusted R-squared:  0.8667 
+## F-statistic: 169.3 on 36 and 896 DF,  p-value: < 2.2e-16
+```
+
+## Decision Tree models
+
+```r
+#fitting decision tree models. Each decision tree model will formulated with an 
+#equivalent outcome to one of the OLS models
+
+library(rpart)
+library(rpart.plot)
+
+dt_model <- rpart(mpg~., data = train1)
+rpart.plot(dt_model)
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
+```r
+dt_log_model <- rpart(log(mpg)~., data = train1)
+rpart.plot(dt_log_model)
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-15-2.png)<!-- -->
+
+```r
+#Note the values displayed at the nodes represent the predicted log of the mpg variable.
+#To convert these to interpretable fuel-efficiency values you use the exp function.
+```
+
+## Random Forest models
+
+
+```r
+#we formulate two random forest models (one for each of the predictors)
+
+library(randomForest)
+set.seed(2001)
+rf_model <- randomForest(mpg~., data = train1)
+set.seed(99)
+rf_log_model <- randomForest(log(mpg)~., data = train1) 
+```
+
+## Performance of the Models
+
+### Collating model estimates
+
+
+```r
+#add the 6 model estimates to a data frame that also contains the actual mpg values 
+#as well as the model predictors.
+
+train_results <- mutate(train1, 
+                        ols = predict(ols_model, train1),
+                        ols_log = exp(predict(ols_log_model, train1)),
+                        dt = predict(dt_model, train1),
+                        dt_log  = exp(predict(dt_log_model, train1)),
+                        rf = predict(rf_model, train1),
+                        rf_log = exp(predict(rf_log_model, train1))
+                        )
+```
+
+### Visualizing model performance
+
+
+```r
+#visualize the model performance by graphing the model estimates vs the actual values 
+#of the fuel efficiency
+
+#We reshape the data to be used easily with 'ggplot2'
+
+
+library(tidyr)
+train_results_long <- pivot_longer(train_results, ols:rf_log, 
+                                   names_to = "method", values_to = "estimate")
+
+train_results_long1 <- train_results_long[,c('mpg', 'method','estimate')]
+
+head(train_results_long1)
+```
+
+```
+## # A tibble: 6 x 3
+##     mpg method  estimate
+##   <dbl> <chr>      <dbl>
+## 1  34.3 ols         32.8
+## 2  34.3 ols_log     33.8
+## 3  34.3 dt          30.8
+## 4  34.3 dt_log      30.9
+## 5  34.3 rf          33.5
+## 6  34.3 rf_log      33.5
+```
+
+```r
+tail(train_results_long1)
+```
+
+```
+## # A tibble: 6 x 3
+##     mpg method  estimate
+##   <dbl> <chr>      <dbl>
+## 1  18.7 ols         22.2
+## 2  18.7 ols_log     21.1
+## 3  18.7 dt          21.5
+## 4  18.7 dt_log      21.4
+## 5  18.7 rf          20.0
+## 6  18.7 rf_log      19.8
+```
+
+```r
+#plot of the model estimates vs the actual MPG values
+
+ggplot(data = train_results_long1, 
+       aes(x = mpg, y = estimate)) + 
+  geom_point(shape = 21, colour = "blue") + 
+  facet_wrap(~method, ncol = 2) + 
+  geom_abline(slope = 1, intercept = 0)   + 
+  xlim(c(0,60)) + ylim(c(0,60)) + theme_minimal()
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
+```r
+#Points on the diagonal line correspond to cars for which the model estimated value
+#and the actual mpg value are very close. Points that are above or below the line 
+#correspond to cars for which the model overestimates or underestimates the mpg 
+#respectively.
+
+
+#Inspecting these plots visually, it seems that the random forest models fit more 
+#closely than the OLS models, which fit more closely than the decision tree models.
+```
+
+### Getting model metrics
+
+
+```r
+#The yardstick::metrics function can be used for summary statistics for a model. 
+#It requires that the model estimates be available in as a column of a data frame 
+#that also contains a column of corresponding truth values.
+
+
+#The three reported metrics are:
+#1. Root mean squared error
+# 2. R2
+# 3. Mean absolute error
+
+library(yardstick)
+
+metric_ols <- metrics(train_results, truth = mpg, estimate = ols)
+metric_ols
+```
+
+```
+## # A tibble: 3 x 3
+##   .metric .estimator .estimate
+##   <chr>   <chr>          <dbl>
+## 1 rmse    standard       2.71 
+## 2 rsq     standard       0.826
+## 3 mae     standard       1.94
+```
+
+```r
+metric_ols_log <- metrics(train_results, truth = mpg, estimate = ols_log)
+metric_ols_log
+```
+
+```
+## # A tibble: 3 x 3
+##   .metric .estimator .estimate
+##   <chr>   <chr>          <dbl>
+## 1 rmse    standard       2.42 
+## 2 rsq     standard       0.865
+## 3 mae     standard       1.67
+```
+
+```r
+metric_dt <- metrics(train_results, truth = mpg, estimate = dt)
+metric_dt
+```
+
+```
+## # A tibble: 3 x 3
+##   .metric .estimator .estimate
+##   <chr>   <chr>          <dbl>
+## 1 rmse    standard       2.69 
+## 2 rsq     standard       0.829
+## 3 mae     standard       1.99
+```
+
+```r
+metric_dt_log <- metrics(train_results, truth = mpg, estimate = dt_log)
+metric_dt_log
+```
+
+```
+## # A tibble: 3 x 3
+##   .metric .estimator .estimate
+##   <chr>   <chr>          <dbl>
+## 1 rmse    standard       2.97 
+## 2 rsq     standard       0.791
+## 3 mae     standard       2.10
+```
+
+```r
+metric_rf <- metrics(train_results, truth = mpg, estimate = rf)
+metric_rf
+```
+
+```
+## # A tibble: 3 x 3
+##   .metric .estimator .estimate
+##   <chr>   <chr>          <dbl>
+## 1 rmse    standard       1.10 
+## 2 rsq     standard       0.973
+## 3 mae     standard       0.782
+```
+
+```r
+metric_rf_log <- metrics(train_results, truth = mpg, estimate = rf_log)
+metric_rf_log
+```
+
+```
+## # A tibble: 3 x 3
+##   .metric .estimator .estimate
+##   <chr>   <chr>          <dbl>
+## 1 rmse    standard       1.13 
+## 2 rsq     standard       0.972
+## 3 mae     standard       0.784
+```
+
+### Comparing models using the metrics (RMSE, R2, MAE)
+
 
 
 
