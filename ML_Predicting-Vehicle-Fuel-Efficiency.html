@@ -3306,8 +3306,8 @@ rf_model &lt;- randomForest(mpg~., data = train1)
 set.seed(99)
 rf_log_model &lt;- randomForest(log(mpg)~., data = train1) </code></pre>
 </div>
-<div id="performance-of-the-models" class="section level2">
-<h2>Performance of the Models</h2>
+<div id="performance-of-the-modelson-training-data" class="section level2">
+<h2>Performance of the Modelson Training Data</h2>
 <div id="collating-model-estimates" class="section level3">
 <h3>Collating model estimates</h3>
 <pre class="r"><code>#add the 6 model estimates to a data frame that also contains the actual mpg values 
@@ -3334,31 +3334,35 @@ library(tidyr)
 train_results_long &lt;- pivot_longer(train_results, ols:rf_log, 
                                    names_to = &quot;method&quot;, values_to = &quot;estimate&quot;)
 
-train_results_long1 &lt;- train_results_long[,c(&#39;mpg&#39;, &#39;method&#39;,&#39;estimate&#39;)]
+#train_results_long1 &lt;- train_results_long[,c(&#39;mpg&#39;, &#39;method&#39;,&#39;estimate&#39;)]
 
-head(train_results_long1)</code></pre>
-<pre><code>## # A tibble: 6 x 3
-##     mpg method  estimate
-##   &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt;
-## 1  34.3 ols         32.8
-## 2  34.3 ols_log     33.8
-## 3  34.3 dt          30.8
-## 4  34.3 dt_log      30.9
-## 5  34.3 rf          33.5
-## 6  34.3 rf_log      33.5</code></pre>
-<pre class="r"><code>tail(train_results_long1)</code></pre>
-<pre><code>## # A tibble: 6 x 3
-##     mpg method  estimate
-##   &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt;
-## 1  18.7 ols         22.2
-## 2  18.7 ols_log     21.1
-## 3  18.7 dt          21.5
-## 4  18.7 dt_log      21.4
-## 5  18.7 rf          20.0
-## 6  18.7 rf_log      19.8</code></pre>
+head(train_results_long)</code></pre>
+<pre><code>## # A tibble: 6 x 16
+##     mpg transmission gears drive displ cylinders class   lv2   lv4 sidi 
+##   &lt;dbl&gt; &lt;chr&gt;        &lt;int&gt; &lt;chr&gt; &lt;dbl&gt;     &lt;int&gt; &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;chr&gt;
+## 1  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 2  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 3  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 4  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 5  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 6  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## # ... with 6 more variables: aspiration &lt;chr&gt;, fuelType1 &lt;chr&gt;, atvType &lt;chr&gt;,
+## #   startStop &lt;chr&gt;, method &lt;chr&gt;, estimate &lt;dbl&gt;</code></pre>
+<pre class="r"><code>tail(train_results_long)</code></pre>
+<pre><code>## # A tibble: 6 x 16
+##     mpg transmission gears drive displ cylinders class   lv2   lv4 sidi 
+##   &lt;dbl&gt; &lt;chr&gt;        &lt;int&gt; &lt;chr&gt; &lt;dbl&gt;     &lt;int&gt; &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;chr&gt;
+## 1  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 2  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 3  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 4  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 5  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 6  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## # ... with 6 more variables: aspiration &lt;chr&gt;, fuelType1 &lt;chr&gt;, atvType &lt;chr&gt;,
+## #   startStop &lt;chr&gt;, method &lt;chr&gt;, estimate &lt;dbl&gt;</code></pre>
 <pre class="r"><code>#plot of the model estimates vs the actual MPG values
 
-ggplot(data = train_results_long1, 
+ggplot(data = train_results_long, 
        aes(x = mpg, y = estimate)) + 
   geom_point(shape = 21, colour = &quot;blue&quot;) + 
   facet_wrap(~method, ncol = 2) + 
@@ -3439,6 +3443,192 @@ metric_rf_log</code></pre>
 </div>
 <div id="comparing-models-using-the-metrics-rmse-r2-mae" class="section level3">
 <h3>Comparing models using the metrics (RMSE, R2, MAE)</h3>
+<pre class="r"><code>metrics2 &lt;- function(fit_name, in_df, truth){
+  out_df &lt;- yardstick::metrics(in_df, fit_name, truth)
+  out_df$fit &lt;- fit_name
+  return(out_df)
+}
+
+comp_models &lt;- function(in_df, fit_names, in_truth, metric, prefix = &quot;&quot;){
+  
+  out_df &lt;- purrr::map_df(fit_names, metrics2, in_df = in_df, truth = in_truth)
+  out_df &lt;- out_df %&gt;% 
+    filter(.metric == metric) %&gt;% 
+    arrange(fit, .estimate)
+  names(out_df)[2] &lt;- paste(prefix, metric)
+  return(out_df)
+}
+
+#we use comp_models to get the metrics for each of the models fitting on the training data:
+
+model_names &lt;- c(&quot;ols&quot;, &quot;ols_log&quot;, &quot;dt&quot;, &quot;dt_log&quot;, &quot;rf&quot;, &quot;rf_log&quot;)
+
+train_rmse &lt;- comp_models(train_results, 
+                          model_names, 
+                          in_truth = &quot;mpg&quot;, 
+                          metric = &quot;rmse&quot;, 
+                          prefix = &quot;train&quot;)
+
+train_rmse</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   .metric `train rmse` .estimate fit    
+##   &lt;chr&gt;   &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;  
+## 1 rmse    standard          2.69 dt     
+## 2 rmse    standard          2.97 dt_log 
+## 3 rmse    standard          2.71 ols    
+## 4 rmse    standard          2.42 ols_log
+## 5 rmse    standard          1.10 rf     
+## 6 rmse    standard          1.13 rf_log</code></pre>
+<pre class="r"><code>train_rsq &lt;- comp_models(train_results, 
+                          model_names, 
+                          in_truth = &quot;mpg&quot;, 
+                          metric = &quot;rsq&quot;, 
+                          prefix = &quot;train&quot;)
+
+train_rsq</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   .metric `train rsq` .estimate fit    
+##   &lt;chr&gt;   &lt;chr&gt;           &lt;dbl&gt; &lt;chr&gt;  
+## 1 rsq     standard        0.829 dt     
+## 2 rsq     standard        0.791 dt_log 
+## 3 rsq     standard        0.826 ols    
+## 4 rsq     standard        0.865 ols_log
+## 5 rsq     standard        0.973 rf     
+## 6 rsq     standard        0.972 rf_log</code></pre>
+<pre class="r"><code>train_mae &lt;- comp_models(train_results, 
+                          model_names, 
+                          in_truth = &quot;mpg&quot;, 
+                          metric = &quot;mae&quot;, 
+                          prefix = &quot;train&quot;)
+
+train_mae</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   .metric `train mae` .estimate fit    
+##   &lt;chr&gt;   &lt;chr&gt;           &lt;dbl&gt; &lt;chr&gt;  
+## 1 mae     standard        1.99  dt     
+## 2 mae     standard        2.10  dt_log 
+## 3 mae     standard        1.94  ols    
+## 4 mae     standard        1.67  ols_log
+## 5 mae     standard        0.782 rf     
+## 6 mae     standard        0.784 rf_log</code></pre>
+</div>
+</div>
+<div id="performance-of-the-models-on-testing-data" class="section level2">
+<h2>Performance of the Models on Testing data</h2>
+<div id="collating-model-estimates-1" class="section level3">
+<h3>Collating model estimates</h3>
+<pre class="r"><code>#To test how the models do on the unseen testing data. Use similar code as before to
+#augment the testing data frame with the model estimates for each of the 6 models
+
+test_results &lt;- mutate(test, ols = predict(ols_model, test),
+                       ols_log = exp(predict(ols_log_model, test)),
+                       dt = predict(dt_model, test),
+                       dt_log  = exp(predict(dt_log_model, test)),
+                       rf = predict(rf_model, test),
+                       rf_log = exp(predict(rf_log_model, test))
+) </code></pre>
+</div>
+<div id="visualizing-model-performance-1" class="section level3">
+<h3>Visualizing model performance</h3>
+<pre class="r"><code>test_results_long &lt;- pivot_longer(test_results, 
+                                  ols:rf_log, 
+                                  names_to = &quot;method&quot;, 
+                                  values_to = &quot;estimate&quot;)
+
+#plot of the model estimates vs the actual MPG values
+
+ggplot(data = test_results_long, 
+       aes(x = mpg, y = estimate)) + 
+  geom_point(shape = 21, colour = &quot;red&quot;) + 
+  facet_wrap(~method, ncol = 2) + 
+  geom_abline(slope = 1, intercept = 0) + 
+  xlim(c(0,60)) + ylim(c(0,60)) + 
+  theme_minimal()</code></pre>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+<div id="comparing-models-using-the-metrics-rmse-r2-mae-1" class="section level3">
+<h3>Comparing models using the metrics (RMSE, R2, MAE)</h3>
+<pre class="r"><code>test_rmse &lt;- comp_models(test_results, 
+                          model_names, 
+                          in_truth = &quot;mpg&quot;, 
+                          metric = &quot;rmse&quot;, 
+                          prefix = &quot;test&quot;)
+
+test_rmse</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   .metric `test rmse` .estimate fit    
+##   &lt;chr&gt;   &lt;chr&gt;           &lt;dbl&gt; &lt;chr&gt;  
+## 1 rmse    standard         2.76 dt     
+## 2 rmse    standard         2.45 dt_log 
+## 3 rmse    standard         2.69 ols    
+## 4 rmse    standard         2.24 ols_log
+## 5 rmse    standard         1.82 rf     
+## 6 rmse    standard         1.81 rf_log</code></pre>
+<pre class="r"><code>test_rsq &lt;- comp_models(test_results, 
+                          model_names, 
+                          in_truth = &quot;mpg&quot;, 
+                          metric = &quot;rsq&quot;, 
+                          prefix = &quot;test&quot;)
+
+test_rsq</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   .metric `test rsq` .estimate fit    
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;  
+## 1 rsq     standard       0.804 dt     
+## 2 rsq     standard       0.835 dt_log 
+## 3 rsq     standard       0.801 ols    
+## 4 rsq     standard       0.860 ols_log
+## 5 rsq     standard       0.910 rf     
+## 6 rsq     standard       0.910 rf_log</code></pre>
+<pre class="r"><code>test_mae &lt;- comp_models(test_results, 
+                          model_names, 
+                          in_truth = &quot;mpg&quot;, 
+                          metric = &quot;mae&quot;, 
+                          prefix = &quot;test&quot;)
+
+test_mae</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   .metric `test mae` .estimate fit    
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;  
+## 1 mae     standard        1.86 dt     
+## 2 mae     standard        1.77 dt_log 
+## 3 mae     standard        1.95 ols    
+## 4 mae     standard        1.58 ols_log
+## 5 mae     standard        1.33 rf     
+## 6 mae     standard        1.33 rf_log</code></pre>
+<pre class="r"><code>#We can see how the metric values changed collectively moving the models from the 
+#training data to the testing data.
+
+inner_join(train_rmse, test_rmse, by = &quot;fit&quot;)</code></pre>
+<pre><code>## # A tibble: 6 x 7
+##   .metric.x `train rmse` .estimate.x fit     .metric.y `test rmse` .estimate.y
+##   &lt;chr&gt;     &lt;chr&gt;              &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;             &lt;dbl&gt;
+## 1 rmse      standard            2.69 dt      rmse      standard           2.76
+## 2 rmse      standard            2.97 dt_log  rmse      standard           2.45
+## 3 rmse      standard            2.71 ols     rmse      standard           2.69
+## 4 rmse      standard            2.42 ols_log rmse      standard           2.24
+## 5 rmse      standard            1.10 rf      rmse      standard           1.82
+## 6 rmse      standard            1.13 rf_log  rmse      standard           1.81</code></pre>
+<pre class="r"><code>inner_join(train_rsq, test_rsq, by = &quot;fit&quot;)</code></pre>
+<pre><code>## # A tibble: 6 x 7
+##   .metric.x `train rsq` .estimate.x fit     .metric.y `test rsq` .estimate.y
+##   &lt;chr&gt;     &lt;chr&gt;             &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;            &lt;dbl&gt;
+## 1 rsq       standard          0.829 dt      rsq       standard         0.804
+## 2 rsq       standard          0.791 dt_log  rsq       standard         0.835
+## 3 rsq       standard          0.826 ols     rsq       standard         0.801
+## 4 rsq       standard          0.865 ols_log rsq       standard         0.860
+## 5 rsq       standard          0.973 rf      rsq       standard         0.910
+## 6 rsq       standard          0.972 rf_log  rsq       standard         0.910</code></pre>
+<pre class="r"><code>inner_join(train_mae, test_mae, by = &quot;fit&quot;)</code></pre>
+<pre><code>## # A tibble: 6 x 7
+##   .metric.x `train mae` .estimate.x fit     .metric.y `test mae` .estimate.y
+##   &lt;chr&gt;     &lt;chr&gt;             &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;            &lt;dbl&gt;
+## 1 mae       standard          1.99  dt      mae       standard          1.86
+## 2 mae       standard          2.10  dt_log  mae       standard          1.77
+## 3 mae       standard          1.94  ols     mae       standard          1.95
+## 4 mae       standard          1.67  ols_log mae       standard          1.58
+## 5 mae       standard          0.782 rf      mae       standard          1.33
+## 6 mae       standard          0.784 rf_log  mae       standard          1.33</code></pre>
 </div>
 </div>
 </div>

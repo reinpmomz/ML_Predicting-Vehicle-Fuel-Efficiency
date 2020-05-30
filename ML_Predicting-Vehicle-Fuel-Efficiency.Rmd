@@ -512,7 +512,7 @@ set.seed(99)
 rf_log_model <- randomForest(log(mpg)~., data = train1) 
 ```
 
-## Performance of the Models
+## Performance of the Modelson Training Data
 
 ### Collating model estimates
 
@@ -544,14 +544,14 @@ library(tidyr)
 train_results_long <- pivot_longer(train_results, ols:rf_log, 
                                    names_to = "method", values_to = "estimate")
 
-train_results_long1 <- train_results_long[,c('mpg', 'method','estimate')]
+#train_results_long1 <- train_results_long[,c('mpg', 'method','estimate')]
 
-head(train_results_long1)
-tail(train_results_long1)
+head(train_results_long)
+tail(train_results_long)
 
 #plot of the model estimates vs the actual MPG values
 
-ggplot(data = train_results_long1, 
+ggplot(data = train_results_long, 
        aes(x = mpg, y = estimate)) + 
   geom_point(shape = 21, colour = "blue") + 
   facet_wrap(~method, ncol = 2) + 
@@ -610,10 +610,130 @@ metric_rf_log
 
 ```{r}
 
+metrics2 <- function(fit_name, in_df, truth){
+  out_df <- yardstick::metrics(in_df, fit_name, truth)
+  out_df$fit <- fit_name
+  return(out_df)
+}
+
+comp_models <- function(in_df, fit_names, in_truth, metric, prefix = ""){
+  
+  out_df <- purrr::map_df(fit_names, metrics2, in_df = in_df, truth = in_truth)
+  out_df <- out_df %>% 
+    filter(.metric == metric) %>% 
+    arrange(fit, .estimate)
+  names(out_df)[2] <- paste(prefix, metric)
+  return(out_df)
+}
+
+#we use comp_models to get the metrics for each of the models fitting on the training data:
+
+model_names <- c("ols", "ols_log", "dt", "dt_log", "rf", "rf_log")
+
+train_rmse <- comp_models(train_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rmse", 
+                          prefix = "train")
+
+train_rmse
+
+train_rsq <- comp_models(train_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rsq", 
+                          prefix = "train")
+
+train_rsq
+
+
+train_mae <- comp_models(train_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "mae", 
+                          prefix = "train")
+
+train_mae
+
+
 ```
 
+## Performance of the Models on Testing data
+
+### Collating model estimates
+
+```{r}
+
+#To test how the models do on the unseen testing data. Use similar code as before to
+#augment the testing data frame with the model estimates for each of the 6 models
+
+test_results <- mutate(test, ols = predict(ols_model, test),
+                       ols_log = exp(predict(ols_log_model, test)),
+                       dt = predict(dt_model, test),
+                       dt_log  = exp(predict(dt_log_model, test)),
+                       rf = predict(rf_model, test),
+                       rf_log = exp(predict(rf_log_model, test))
+) 
+
+```
+
+### Visualizing model performance
+
+```{r}
+
+test_results_long <- pivot_longer(test_results, 
+                                  ols:rf_log, 
+                                  names_to = "method", 
+                                  values_to = "estimate")
+
+#plot of the model estimates vs the actual MPG values
+
+ggplot(data = test_results_long, 
+       aes(x = mpg, y = estimate)) + 
+  geom_point(shape = 21, colour = "red") + 
+  facet_wrap(~method, ncol = 2) + 
+  geom_abline(slope = 1, intercept = 0) + 
+  xlim(c(0,60)) + ylim(c(0,60)) + 
+  theme_minimal()
+
+```
+
+### Comparing models using the metrics (RMSE, R2, MAE)
+
+```{r}
+test_rmse <- comp_models(test_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rmse", 
+                          prefix = "test")
+
+test_rmse
+
+test_rsq <- comp_models(test_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rsq", 
+                          prefix = "test")
+
+test_rsq
 
 
+test_mae <- comp_models(test_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "mae", 
+                          prefix = "test")
+
+test_mae
+
+#We can see how the metric values changed collectively moving the models from the 
+#training data to the testing data.
+
+inner_join(train_rmse, test_rmse, by = "fit")
+inner_join(train_rsq, test_rsq, by = "fit")
+inner_join(train_mae, test_mae, by = "fit")
+
+```
 
 
 

@@ -2745,7 +2745,7 @@ set.seed(99)
 rf_log_model <- randomForest(log(mpg)~., data = train1) 
 ```
 
-## Performance of the Models
+## Performance of the Modelson Training Data
 
 ### Collating model estimates
 
@@ -2778,43 +2778,47 @@ library(tidyr)
 train_results_long <- pivot_longer(train_results, ols:rf_log, 
                                    names_to = "method", values_to = "estimate")
 
-train_results_long1 <- train_results_long[,c('mpg', 'method','estimate')]
+#train_results_long1 <- train_results_long[,c('mpg', 'method','estimate')]
 
-head(train_results_long1)
+head(train_results_long)
 ```
 
 ```
-## # A tibble: 6 x 3
-##     mpg method  estimate
-##   <dbl> <chr>      <dbl>
-## 1  34.3 ols         32.8
-## 2  34.3 ols_log     33.8
-## 3  34.3 dt          30.8
-## 4  34.3 dt_log      30.9
-## 5  34.3 rf          33.5
-## 6  34.3 rf_log      33.5
+## # A tibble: 6 x 16
+##     mpg transmission gears drive displ cylinders class   lv2   lv4 sidi 
+##   <dbl> <chr>        <int> <chr> <dbl>     <int> <chr> <int> <int> <chr>
+## 1  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 2  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 3  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 4  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 5  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## 6  34.3 CVT             10 FWD       2         4 Comp~     0    13 Y    
+## # ... with 6 more variables: aspiration <chr>, fuelType1 <chr>, atvType <chr>,
+## #   startStop <chr>, method <chr>, estimate <dbl>
 ```
 
 ```r
-tail(train_results_long1)
+tail(train_results_long)
 ```
 
 ```
-## # A tibble: 6 x 3
-##     mpg method  estimate
-##   <dbl> <chr>      <dbl>
-## 1  18.7 ols         22.2
-## 2  18.7 ols_log     21.1
-## 3  18.7 dt          21.5
-## 4  18.7 dt_log      21.4
-## 5  18.7 rf          20.0
-## 6  18.7 rf_log      19.8
+## # A tibble: 6 x 16
+##     mpg transmission gears drive displ cylinders class   lv2   lv4 sidi 
+##   <dbl> <chr>        <int> <chr> <dbl>     <int> <chr> <int> <int> <chr>
+## 1  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 2  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 3  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 4  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 5  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## 6  18.7 Automatic        8 AWD       3         6 Std ~     0     0 Y    
+## # ... with 6 more variables: aspiration <chr>, fuelType1 <chr>, atvType <chr>,
+## #   startStop <chr>, method <chr>, estimate <dbl>
 ```
 
 ```r
 #plot of the model estimates vs the actual MPG values
 
-ggplot(data = train_results_long1, 
+ggplot(data = train_results_long, 
        aes(x = mpg, y = estimate)) + 
   geom_point(shape = 21, colour = "blue") + 
   facet_wrap(~method, ncol = 2) + 
@@ -2938,9 +2942,251 @@ metric_rf_log
 
 
 
+```r
+metrics2 <- function(fit_name, in_df, truth){
+  out_df <- yardstick::metrics(in_df, fit_name, truth)
+  out_df$fit <- fit_name
+  return(out_df)
+}
+
+comp_models <- function(in_df, fit_names, in_truth, metric, prefix = ""){
+  
+  out_df <- purrr::map_df(fit_names, metrics2, in_df = in_df, truth = in_truth)
+  out_df <- out_df %>% 
+    filter(.metric == metric) %>% 
+    arrange(fit, .estimate)
+  names(out_df)[2] <- paste(prefix, metric)
+  return(out_df)
+}
+
+#we use comp_models to get the metrics for each of the models fitting on the training data:
+
+model_names <- c("ols", "ols_log", "dt", "dt_log", "rf", "rf_log")
+
+train_rmse <- comp_models(train_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rmse", 
+                          prefix = "train")
+
+train_rmse
+```
+
+```
+## # A tibble: 6 x 4
+##   .metric `train rmse` .estimate fit    
+##   <chr>   <chr>            <dbl> <chr>  
+## 1 rmse    standard          2.69 dt     
+## 2 rmse    standard          2.97 dt_log 
+## 3 rmse    standard          2.71 ols    
+## 4 rmse    standard          2.42 ols_log
+## 5 rmse    standard          1.10 rf     
+## 6 rmse    standard          1.13 rf_log
+```
+
+```r
+train_rsq <- comp_models(train_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rsq", 
+                          prefix = "train")
+
+train_rsq
+```
+
+```
+## # A tibble: 6 x 4
+##   .metric `train rsq` .estimate fit    
+##   <chr>   <chr>           <dbl> <chr>  
+## 1 rsq     standard        0.829 dt     
+## 2 rsq     standard        0.791 dt_log 
+## 3 rsq     standard        0.826 ols    
+## 4 rsq     standard        0.865 ols_log
+## 5 rsq     standard        0.973 rf     
+## 6 rsq     standard        0.972 rf_log
+```
+
+```r
+train_mae <- comp_models(train_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "mae", 
+                          prefix = "train")
+
+train_mae
+```
+
+```
+## # A tibble: 6 x 4
+##   .metric `train mae` .estimate fit    
+##   <chr>   <chr>           <dbl> <chr>  
+## 1 mae     standard        1.99  dt     
+## 2 mae     standard        2.10  dt_log 
+## 3 mae     standard        1.94  ols    
+## 4 mae     standard        1.67  ols_log
+## 5 mae     standard        0.782 rf     
+## 6 mae     standard        0.784 rf_log
+```
+
+## Performance of the Models on Testing data
+
+### Collating model estimates
 
 
+```r
+#To test how the models do on the unseen testing data. Use similar code as before to
+#augment the testing data frame with the model estimates for each of the 6 models
 
+test_results <- mutate(test, ols = predict(ols_model, test),
+                       ols_log = exp(predict(ols_log_model, test)),
+                       dt = predict(dt_model, test),
+                       dt_log  = exp(predict(dt_log_model, test)),
+                       rf = predict(rf_model, test),
+                       rf_log = exp(predict(rf_log_model, test))
+) 
+```
+
+### Visualizing model performance
+
+
+```r
+test_results_long <- pivot_longer(test_results, 
+                                  ols:rf_log, 
+                                  names_to = "method", 
+                                  values_to = "estimate")
+
+#plot of the model estimates vs the actual MPG values
+
+ggplot(data = test_results_long, 
+       aes(x = mpg, y = estimate)) + 
+  geom_point(shape = 21, colour = "red") + 
+  facet_wrap(~method, ncol = 2) + 
+  geom_abline(slope = 1, intercept = 0) + 
+  xlim(c(0,60)) + ylim(c(0,60)) + 
+  theme_minimal()
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+
+### Comparing models using the metrics (RMSE, R2, MAE)
+
+
+```r
+test_rmse <- comp_models(test_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rmse", 
+                          prefix = "test")
+
+test_rmse
+```
+
+```
+## # A tibble: 6 x 4
+##   .metric `test rmse` .estimate fit    
+##   <chr>   <chr>           <dbl> <chr>  
+## 1 rmse    standard         2.76 dt     
+## 2 rmse    standard         2.45 dt_log 
+## 3 rmse    standard         2.69 ols    
+## 4 rmse    standard         2.24 ols_log
+## 5 rmse    standard         1.82 rf     
+## 6 rmse    standard         1.81 rf_log
+```
+
+```r
+test_rsq <- comp_models(test_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "rsq", 
+                          prefix = "test")
+
+test_rsq
+```
+
+```
+## # A tibble: 6 x 4
+##   .metric `test rsq` .estimate fit    
+##   <chr>   <chr>          <dbl> <chr>  
+## 1 rsq     standard       0.804 dt     
+## 2 rsq     standard       0.835 dt_log 
+## 3 rsq     standard       0.801 ols    
+## 4 rsq     standard       0.860 ols_log
+## 5 rsq     standard       0.910 rf     
+## 6 rsq     standard       0.910 rf_log
+```
+
+```r
+test_mae <- comp_models(test_results, 
+                          model_names, 
+                          in_truth = "mpg", 
+                          metric = "mae", 
+                          prefix = "test")
+
+test_mae
+```
+
+```
+## # A tibble: 6 x 4
+##   .metric `test mae` .estimate fit    
+##   <chr>   <chr>          <dbl> <chr>  
+## 1 mae     standard        1.86 dt     
+## 2 mae     standard        1.77 dt_log 
+## 3 mae     standard        1.95 ols    
+## 4 mae     standard        1.58 ols_log
+## 5 mae     standard        1.33 rf     
+## 6 mae     standard        1.33 rf_log
+```
+
+```r
+#We can see how the metric values changed collectively moving the models from the 
+#training data to the testing data.
+
+inner_join(train_rmse, test_rmse, by = "fit")
+```
+
+```
+## # A tibble: 6 x 7
+##   .metric.x `train rmse` .estimate.x fit     .metric.y `test rmse` .estimate.y
+##   <chr>     <chr>              <dbl> <chr>   <chr>     <chr>             <dbl>
+## 1 rmse      standard            2.69 dt      rmse      standard           2.76
+## 2 rmse      standard            2.97 dt_log  rmse      standard           2.45
+## 3 rmse      standard            2.71 ols     rmse      standard           2.69
+## 4 rmse      standard            2.42 ols_log rmse      standard           2.24
+## 5 rmse      standard            1.10 rf      rmse      standard           1.82
+## 6 rmse      standard            1.13 rf_log  rmse      standard           1.81
+```
+
+```r
+inner_join(train_rsq, test_rsq, by = "fit")
+```
+
+```
+## # A tibble: 6 x 7
+##   .metric.x `train rsq` .estimate.x fit     .metric.y `test rsq` .estimate.y
+##   <chr>     <chr>             <dbl> <chr>   <chr>     <chr>            <dbl>
+## 1 rsq       standard          0.829 dt      rsq       standard         0.804
+## 2 rsq       standard          0.791 dt_log  rsq       standard         0.835
+## 3 rsq       standard          0.826 ols     rsq       standard         0.801
+## 4 rsq       standard          0.865 ols_log rsq       standard         0.860
+## 5 rsq       standard          0.973 rf      rsq       standard         0.910
+## 6 rsq       standard          0.972 rf_log  rsq       standard         0.910
+```
+
+```r
+inner_join(train_mae, test_mae, by = "fit")
+```
+
+```
+## # A tibble: 6 x 7
+##   .metric.x `train mae` .estimate.x fit     .metric.y `test mae` .estimate.y
+##   <chr>     <chr>             <dbl> <chr>   <chr>     <chr>            <dbl>
+## 1 mae       standard          1.99  dt      mae       standard          1.86
+## 2 mae       standard          2.10  dt_log  mae       standard          1.77
+## 3 mae       standard          1.94  ols     mae       standard          1.95
+## 4 mae       standard          1.67  ols_log mae       standard          1.58
+## 5 mae       standard          0.782 rf      mae       standard          1.33
+## 6 mae       standard          0.784 rf_log  mae       standard          1.33
+```
 
 
 
