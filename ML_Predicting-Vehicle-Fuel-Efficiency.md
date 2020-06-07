@@ -1,7 +1,7 @@
 ---
 title: "ML_Predicting-Vehicle-Fuel-Efficiency"
 author: "Reinp"
-date: "2020-05-30"
+date: "2020-06-07"
 output:
   html_document: 
     keep_md: yes
@@ -2430,6 +2430,8 @@ ggplot(data = train,
 ```
 
 ![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+
 ## Finding a fitting distribution for the mpg variable
 
 
@@ -2637,6 +2639,12 @@ summary(ols_model)
 ## F-statistic: 118.2 on 36 and 896 DF,  p-value: < 2.2e-16
 ```
 
+```r
+plot(ols_model) #shows several diagnostic graphs
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-13-1.png)<!-- -->![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-13-2.png)<!-- -->![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-13-3.png)<!-- -->![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-13-4.png)<!-- -->
+
 ### 2. Alternate Ordinary Least Squares
 
 ```r
@@ -2745,7 +2753,7 @@ set.seed(99)
 rf_log_model <- randomForest(log(mpg)~., data = train1) 
 ```
 
-## Performance of the Modelson Training Data
+## Performance of the Models on Training Data
 
 ### Collating model estimates
 
@@ -3187,6 +3195,80 @@ inner_join(train_mae, test_mae, by = "fit")
 ## 5 mae       standard          0.782 rf      mae       standard          1.33
 ## 6 mae       standard          0.784 rf_log  mae       standard          1.33
 ```
+
+
+## Residuals of the Models
+
+### Training data
+
+
+```r
+#add the 6 model residuals to a data frame that also contains the actual mpg values 
+#as well as the model predictors.
+
+train_residuals <- mutate(train_results, 
+                        ols_residual = ols - mpg,
+                        ols_log_residual = ols_log - mpg,
+                        dt_residual = dt - mpg,
+                        dt_log_residual  = dt_log - mpg,
+                        rf_residual = rf - mpg,
+                        rf_log_residual = rf_log - mpg
+                        )
+
+
+train_residuals_long <- pivot_longer(train_residuals, ols_residual:rf_log_residual, 
+                                  names_to = "method1", values_to = "residual")
+
+
+#plot of the model residuals vs the actual MPG values
+
+ggplot(data = train_residuals_long, 
+       aes(x = mpg, y = residual)) + 
+  geom_point(shape = 21, colour = "green") + 
+  facet_wrap(~method1, ncol = 2) + 
+  geom_hline(yintercept = 0, linetype = "dashed")   + 
+  xlim(c(0,60)) + ylim(c(-30,25)) + theme_minimal()
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+
+
+
+### Testing data
+
+
+```r
+#add the 6 model residuals to a data frame that also contains the actual mpg values 
+#as well as the model predictors.
+
+test_residuals <- mutate(test_results, 
+                        ols_residual = ols - mpg,
+                        ols_log_residual = ols_log - mpg,
+                        dt_residual = dt - mpg,
+                        dt_log_residual  = dt_log - mpg,
+                        rf_residual = rf - mpg,
+                        rf_log_residual = rf_log - mpg
+                        )
+
+
+test_residuals_long <- pivot_longer(test_residuals, ols_residual:rf_log_residual, 
+                                  names_to = "method1", values_to = "residual")
+
+
+#plot of the model residuals vs the actual MPG values
+
+ggplot(data = test_residuals_long, 
+       aes(x = mpg, y = residual)) + 
+  geom_point(shape = 21, colour = "orange") + 
+  facet_wrap(~method1, ncol = 2) + 
+  geom_hline(yintercept = 0, linetype = "dashed")   + 
+  xlim(c(0,60)) + ylim(c(-30,25)) + theme_minimal()
+```
+
+![](ML_Predicting-Vehicle-Fuel-Efficiency_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+
+
+
 
 
 
